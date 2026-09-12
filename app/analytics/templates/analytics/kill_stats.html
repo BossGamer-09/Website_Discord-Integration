@@ -1,0 +1,142 @@
+{% extends "analytics/base.html" %}
+{% block title %}Kill Stats{% endblock %}
+{% block nav_kills %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>⚔️ Kill Stats</h1>
+  <p>PvP kill activity, top performers, and target breakdown.</p>
+  <span class="period-badge">📅 {{ period_label }}</span>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Total Kills</div>
+    <div class="value red">{{ total_kills }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Unique Killers</div>
+    <div class="value accent">{{ top_killers|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Game Modes</div>
+    <div class="value">{{ by_game_mode|length }}</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Top killers -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Top Killers</h2>
+      <span class="count-badge">{{ top_killers|length }}</span>
+    </div>
+    {% if top_killers %}
+    <table class="data-table">
+      <thead><tr>
+        <th class="rank-col">#</th>
+        <th>Pilot</th>
+        <th>Kills</th>
+      </tr></thead>
+      <tbody>
+      {% for row in top_killers %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>{{ row.killer_name }}</td>
+        <td>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill red" style="width:{% widthratio row.kills top_killers.0.kills 100 %}%"></div></div>
+            <span class="bar-val">{{ row.kills }}</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No kills recorded.</div>{% endif %}
+  </div>
+
+  <!-- By game mode -->
+  <div class="section-card">
+    <div class="section-header"><h2>Kills by Game Mode</h2></div>
+    {% if by_game_mode %}
+    <div style="padding:16px 20px;">
+      {% for row in by_game_mode %}
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:0.85rem;">{{ row.game_mode|default:"Unknown" }}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--ink-muted);">{{ row.kills }}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill amber" style="width:{% widthratio row.kills by_game_mode.0.kills 100 %}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No game mode data.</div>{% endif %}
+  </div>
+</div>
+
+<!-- Weekly kill trend -->
+{% if weekly_kills %}
+<div class="section-card">
+  <div class="section-header"><h2>Weekly Kill Trend (Last 8 Weeks)</h2></div>
+  <div style="padding:16px 20px;">
+    {% for row in weekly_kills %}
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <span style="font-size:0.8rem;color:var(--ink-muted);">Week of {{ row.week|date:"M d" }}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:0.8rem;">{{ row.count }}</span>
+      </div>
+      <div class="bar-track" style="height:8px;">
+        <div class="bar-fill red" style="width:{% widthratio row.count weekly_kills.0.count 100 %}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="two-col">
+  <!-- Top victim players -->
+  <div class="section-card">
+    <div class="section-header"><h2>Most Killed Players</h2></div>
+    {% if top_victims %}
+    <table class="data-table">
+      <thead><tr><th class="rank-col">#</th><th>Victim</th><th>Deaths</th></tr></thead>
+      <tbody>
+      {% for row in top_victims %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>{{ row.victim }}</td>
+        <td><span style="font-family:'Space Mono',monospace;font-size:0.82rem;">{{ row.count }}</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No victim data.</div>{% endif %}
+  </div>
+
+  <!-- Top victim orgs -->
+  <div class="section-card">
+    <div class="section-header"><h2>Most Targeted Orgs</h2></div>
+    {% if top_victim_orgs %}
+    <table class="data-table">
+      <thead><tr><th class="rank-col">#</th><th>Org</th><th>Kills</th></tr></thead>
+      <tbody>
+      {% for row in top_victim_orgs %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>
+          {{ row.victim_org }}
+          {% if row.victim_org_sid %}<span style="font-size:0.75rem;color:var(--ink-subtle);"> [{{ row.victim_org_sid }}]</span>{% endif %}
+        </td>
+        <td><span style="font-family:'Space Mono',monospace;font-size:0.82rem;">{{ row.count }}</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No org data.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

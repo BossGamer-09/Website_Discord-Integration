@@ -1,0 +1,129 @@
+{% extends "analytics/base.html" %}
+{% block title %}Performance Scores{% endblock %}
+{% block nav_performance %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🏆 Performance Scores</h1>
+  <p>Composite member scores across attendance, voice, combat, and skillcard.</p>
+  <span class="period-badge">📅 {{ period_label }}</span>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Members Scored</div>
+    <div class="value accent">{{ total }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Elite (≥ 70)</div>
+    <div class="value green">{{ tier_elite }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Strong (50–69)</div>
+    <div class="value accent">{{ tier_strong }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Average (30–49)</div>
+    <div class="value amber">{{ tier_average }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Developing (&lt; 30)</div>
+    <div class="value red">{{ tier_developing }}</div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="section-card" style="margin-bottom:20px;">
+  <div class="section-header"><h2>Score Components</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border-top:1px solid var(--border);">
+    <div style="padding:16px 22px;border-right:1px solid var(--border);">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--green);margin-bottom:4px;">Attendance (0–40 pts)</div>
+      <div style="font-size:0.82rem;color:var(--ink-muted);">RSVP show rate × 0.4 — last 90 days, min 2 RSVPs</div>
+    </div>
+    <div style="padding:16px 22px;border-right:1px solid var(--border);">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:4px;">Voice (0–30 pts)</div>
+      <div style="font-size:0.82rem;color:var(--ink-muted);">Avg talking efficiency + consistency × 0.30 — monthly voice summaries</div>
+    </div>
+    <div style="padding:16px 22px;border-right:1px solid var(--border);">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--red);margin-bottom:4px;">Combat (0–20 pts)</div>
+      <div style="font-size:0.82rem;color:var(--ink-muted);">Pilot skill avg (team fighting + duelling ÷ 2) × 4 — from Pilot Roster</div>
+    </div>
+    <div style="padding:16px 22px;">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);margin-bottom:4px;">Skillcard (0–10 pts)</div>
+      <div style="font-size:0.82rem;color:var(--ink-muted);">Scorecard overall_avg (0–10) — infantry performance rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>Member Leaderboard</h2>
+    <span class="count-badge">{{ total }}</span>
+  </div>
+  {% if rows %}
+  <table class="data-table">
+    <thead><tr>
+      <th class="rank-col">#</th>
+      <th>Member</th>
+      <th>Rank</th>
+      <th>Composite</th>
+      <th title="Attendance score (0-40 pts)">Att</th>
+      <th title="Voice score (0-30 pts)">Voice</th>
+      <th title="Combat score (0-20 pts)">Combat</th>
+      <th title="Skillcard score (0-10 pts)">Skill</th>
+      <th>Notes</th>
+    </tr></thead>
+    <tbody>
+    {% for row in rows %}
+    <tr>
+      <td class="rank-col">{{ forloop.counter }}</td>
+      <td style="font-weight:500;">{{ row.member.display_name }}</td>
+      <td>
+        {% if row.member.rank %}
+          <span class="pill pill-blue" style="white-space:nowrap;">{{ row.member.rank.prefix }} {{ row.member.rank.name }}</span>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track" style="min-width:80px;">
+            <div class="bar-fill {% if row.composite >= 70 %}green{% elif row.composite >= 50 %}accent{% elif row.composite >= 30 %}amber{% else %}red{% endif %}"
+                 style="width:{{ row.composite }}%"></div>
+          </div>
+          <span class="bar-val" style="min-width:40px;font-weight:700;">{{ row.composite }}</span>
+        </div>
+      </td>
+      <td>
+        {% if row.att_rate is not None %}
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--green);">{{ row.att_score }}</span>
+          <span style="font-size:0.72rem;color:var(--ink-subtle);"> ({{ row.att_rate }}%)</span>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td>
+        {% if row.voice_score %}
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--accent);">{{ row.voice_score }}</span>
+          <span style="font-size:0.72rem;color:var(--ink-subtle);"> ({{ row.voice_hours }}h)</span>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td>
+        {% if row.combat_score %}
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--red);">{{ row.combat_score }}</span>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td>
+        {% if row.sc_score %}
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--amber);">{{ row.sc_score }}</span>
+          {% if row.sc_label %}<span style="font-size:0.7rem;color:var(--ink-subtle);"> {{ row.sc_label }}</span>{% endif %}
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td style="font-size:0.75rem;color:var(--ink-subtle);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        {% if row.att_rsvps %}{{ row.att_rsvps }} RSVP{% endif %}
+        {% if row.pilot_name and row.pilot_name != row.member.display_name %} · {{ row.pilot_name }}{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No members with scoreable data in this period.</div>{% endif %}
+</div>
+{% endblock %}

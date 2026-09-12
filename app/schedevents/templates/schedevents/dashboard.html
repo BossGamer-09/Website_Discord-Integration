@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Events · BlightVeil{% endblock %}
+
+{% block content %}
+{% include "schedevents/_shared_css.html" %}
+<style>
+  /* ── Top nav bar ── */
+  .ev-topbar { position:sticky; top:0; z-index:200; background:var(--card-bg); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0; padding:0 24px; height:54px; }
+  .ev-topbar-logo { display:flex; align-items:center; gap:9px; text-decoration:none; flex-shrink:0; }
+  .ev-topbar-logo-img { height:28px; width:28px; object-fit:contain; border-radius:6px; }
+  .ev-topbar-logo-name { font-family:'Syne',sans-serif; font-weight:800; font-size:.95rem; color:var(--ink); }
+  .ev-topbar-sep { color:var(--border); margin:0 10px; font-size:1.1rem; }
+  .ev-topbar-navlink { font-size:.85rem; font-weight:600; color:var(--ink-muted); text-decoration:none; padding:6px 10px; border-radius:6px; transition:all .15s; white-space:nowrap; }
+  .ev-topbar-navlink:hover { color:var(--ink); background:var(--surface); }
+  .ev-topbar-navlink.active { color:var(--accent); background:var(--accent-light); }
+  .ev-topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .ev-topbar-create { font-size:.82rem; font-weight:700; padding:6px 14px; border-radius:7px; background:var(--accent); color:#fff; text-decoration:none; transition:background .15s; white-space:nowrap; }
+  .ev-topbar-create:hover { background:var(--accent-hover); color:#fff; }
+  .ev-topbar-theme { width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:transparent; color:var(--ink-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .ev-topbar-theme:hover { color:var(--ink); border-color:var(--accent); }
+  .ev-topbar-theme .icon-sun  { display:none; }
+  .ev-topbar-theme .icon-moon { display:block; }
+  [data-theme="dark"] .ev-topbar-theme .icon-sun  { display:block; }
+  [data-theme="dark"] .ev-topbar-theme .icon-moon { display:none; }
+
+  /* ── Page shell ── */
+  .ev-shell { max-width:860px; margin:0 auto; padding:32px 24px 80px; }
+
+  /* ── Page header ── */
+  .ev-page-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:24px; gap:12px; flex-wrap:wrap; }
+  .ev-page-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:var(--ink); letter-spacing:-.02em; line-height:1.2; }
+  .ev-page-sub { font-size:.85rem; color:var(--ink-muted); margin-top:3px; }
+  .ev-manage-link { font-size:.78rem; font-weight:600; color:var(--ink-subtle); text-decoration:none; padding:5px 10px; border-radius:6px; border:1px solid var(--border); }
+  .ev-manage-link:hover { color:var(--ink); border-color:var(--ink-muted); }
+
+  /* ── Tab nav ── */
+  .ev-tabs { display:flex; gap:2px; border-bottom:2px solid var(--border); margin-bottom:24px; }
+  .ev-tab { padding:10px 16px; font-size:.85rem; font-weight:600; color:var(--ink-muted); text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-2px; display:inline-flex; align-items:center; gap:6px; border-radius:6px 6px 0 0; transition:color .15s, border-color .15s, background .15s; }
+  .ev-tab:hover { color:var(--ink); background:var(--surface); }
+  .ev-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--accent-light); }
+
+  /* ── Event list ── */
+  .ev-list { display:flex; flex-direction:column; gap:0; }
+  .ev-group { margin-bottom:28px; }
+  .ev-group-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .ev-group-icon { font-size:.85rem; }
+  .ev-group-label { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-subtle); }
+  .ev-group-count { font-size:.68rem; font-weight:600; color:var(--ink-subtle); background:var(--border); padding:1px 7px; border-radius:99px; }
+  .ev-group-cards { display:flex; flex-direction:column; gap:8px; }
+
+  /* ── Event card ── */
+  .ev-card { display:flex; align-items:stretch; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; text-decoration:none; color:inherit; transition:box-shadow .2s, border-color .18s, transform .15s; overflow:hidden; position:relative; cursor:pointer; }
+  .ev-card:hover { box-shadow:var(--shadow-hover); border-color:var(--accent); transform:translateY(-1px); }
+  .ev-card.ev-card-live { border-color:var(--success); }
+  .ev-card-accent { width:4px; flex-shrink:0; }
+  .ev-card-body { flex:1; padding:14px 18px; display:flex; align-items:center; gap:16px; min-width:0; }
+  .ev-card-date-block { flex-shrink:0; text-align:center; width:44px; }
+  .ev-card-date-day  { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; line-height:1; color:var(--ink); }
+  .ev-card-date-mon  { font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-subtle); margin-top:1px; }
+  .ev-card-divider   { width:1px; height:36px; background:var(--border); flex-shrink:0; }
+  .ev-card-info { flex:1; min-width:0; }
+  .ev-card-title { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ev-card-meta  { display:flex; align-items:center; gap:10px; margin-top:4px; flex-wrap:wrap; }
+  .ev-card-time  { font-size:.78rem; color:var(--ink-muted); font-weight:500; }
+  .ev-card-indicator { font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-subtle); }
+  .ev-card-right { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0; padding-right:4px; }
+  .ev-card-rsvp-count { font-size:.78rem; font-weight:600; color:var(--ink-muted); white-space:nowrap; }
+  .ev-card-badge { display:inline-flex; align-items:center; gap:3px; font-size:.68rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:99px; white-space:nowrap; }
+  .ev-badge-going    { background:var(--success-light); color:var(--success); border:1px solid var(--success-border); }
+  .ev-badge-maybe    { background:var(--warning-light); color:var(--warning); border:1px solid var(--warning-border); }
+  .ev-badge-wait     { background:var(--purple-light);  color:var(--purple);  border:1px solid var(--purple-border); }
+  .ev-badge-notgoing { background:var(--danger-light);  color:var(--danger);  border:1px solid var(--danger-border); }
+  .ev-badge-done     { background:var(--border); color:var(--ink-muted); border:none; }
+  .ev-mine-stat-hidden { display:none; }
+  .ev-badge-live     { background:var(--success-light); color:var(--success); border:1px solid var(--success-border); animation:pulse-badge 1.6s ease-in-out infinite; }
+
+  /* ── Mine tab summary strip ── */
+  .ev-mine-strip { display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .ev-mine-stat  { display:flex; align-items:center; gap:5px; font-size:.8rem; font-weight:600; color:var(--ink-muted); }
+  .ev-mine-stat-n { font-size:1rem; font-weight:800; color:var(--ink); }
+
+  /* ── Past event card dim ── */
+  .ev-card-past .ev-card-title { color:var(--ink-muted); }
+  .ev-card-past .ev-card-date-day { color:var(--ink-muted); }
+  @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .ev-cap-bar { width:80px; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .ev-cap-fill { height:100%; border-radius:2px; transition:width .4s; background:var(--accent); }
+  .ev-cap-fill.full { background:var(--danger); }
+
+  /* ── Empty state ── */
+  .ev-empty { padding:56px 24px; text-align:center; }
+  .ev-empty-icon { font-size:2.4rem; margin-bottom:12px; opacity:.5; }
+  .ev-empty-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--ink); margin-bottom:6px; }
+  .ev-empty-sub { font-size:.88rem; color:var(--ink-subtle); }
+  .ev-empty-sub a { color:var(--accent); text-decoration:none; font-weight:500; }
+  .ev-empty-sub a:hover { text-decoration:underline; }
+
+  /* ── Filter chips ── */
+  .ev-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; }
+  .ev-filter-chip { font-size:.78rem; font-weight:600; padding:5px 12px; border-radius:99px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--ink-muted); text-decoration:none; transition:all .15s; white-space:nowrap; }
+  .ev-filter-chip:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .ev-filter-chip.active { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+
+  /* ── Messages ── */
+  .ev-messages { margin-bottom:20px; }
+
+  @media(max-width:600px) {
+    .ev-shell { padding:20px 16px 60px; }
+    .ev-card-right { display:none; }
+    .ev-topbar { padding:0 16px; }
+  }
+</style>
+
+<!-- Top navigation bar -->
+<nav class="ev-topbar">
+  <a href="{% url 'unifieduser:index' %}" class="ev-topbar-logo">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="" class="ev-topbar-logo-img">
+    <span class="ev-topbar-logo-name">BlightVeil</span>
+  </a>
+  <span class="ev-topbar-sep">›</span>
+  <a href="{% url 'schedevents:dashboard' %}" class="ev-topbar-navlink active">Events</a>
+  <a href="{% url 'schedevents:calendar' %}" class="ev-topbar-navlink">Calendar</a>
+
+  <div class="ev-topbar-right">
+    {% if can_manage %}
+      <a href="{% url 'schedevents:manage' %}" class="ev-manage-link">⚙ Manage</a>
+    {% endif %}
+    {% if can_create %}
+      <a href="{% url 'schedevents:event_create' %}" class="ev-topbar-create">+ New Event</a>
+    {% endif %}
+    <button type="button" class="ev-topbar-theme" id="themeToggle" aria-label="Toggle dark mode">
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun"  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="ev-shell">
+
+  {% if messages %}
+  <ul class="messages ev-messages">{% for msg in messages %}
+    <li class="{{ msg.tags }}">{{ msg }}</li>
+  {% endfor %}</ul>
+  {% endif %}
+
+  <!-- Page header -->
+  <div class="ev-page-header">
+    <div>
+      <div class="ev-page-title">Org Events</div>
+      <div class="ev-page-sub">Upcoming operations, training sessions, and org activities.</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="ev-tabs">
+    <a href="?tab=upcoming" class="ev-tab {% if tab == 'upcoming' %}active{% endif %}">📅 Upcoming</a>
+    <a href="?tab=mine"     class="ev-tab {% if tab == 'mine' %}active{% endif %}">✅ My RSVPs</a>
+    <a href="?tab=past"     class="ev-tab {% if tab == 'past' %}active{% endif %}">🕐 Past</a>
+    <a href="{% url 'schedevents:calendar' %}" class="ev-tab">🗓 Calendar</a>
+  </div>
+
+  <!-- Filter chips -->
+  {% if filter_chips %}
+  <div class="ev-filters">
+    {% for label, params, is_active in filter_chips %}
+    <a href="?{{ params }}" class="ev-filter-chip {% if is_active %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- My RSVPs summary strip -->
+  {% if tab == 'mine' and total %}
+  <div class="ev-mine-strip">
+    <span class="ev-mine-stat"><span class="ev-mine-stat-n">{{ total }}</span> total RSVPs</span>
+    <span class="ev-mine-stat ev-mine-stat-hidden" id="mine-going-stat"><span class="ev-mine-stat-n" id="mine-going-n">0</span> going</span>
+    <span class="ev-mine-stat ev-mine-stat-hidden" id="mine-maybe-stat"><span class="ev-mine-stat-n" id="mine-maybe-n">0</span> maybe</span>
+    <span class="ev-mine-stat ev-mine-stat-hidden" id="mine-wait-stat"><span class="ev-mine-stat-n" id="mine-wait-n">0</span> waitlisted</span>
+  </div>
+  {% endif %}
+
+  <!-- Event groups -->
+  {% if grouped %}
+  <div class="ev-list">
+    {% for label, icon, entries in grouped %}
+    <div class="ev-group">
+      <div class="ev-group-header">
+        <span class="ev-group-icon">{{ icon }}</span>
+        <span class="ev-group-label">{{ label }}</span>
+        <span class="ev-group-count">{{ entries|length }}</span>
+      </div>
+      <div class="ev-group-cards">
+        {% for entry in entries %}
+        {% with plan=entry.plan %}
+        <a class="ev-card {% if plan.status == 'ACTIVE' %}ev-card-live{% elif tab == 'past' or plan.planned_start_at < now %}ev-card-past{% endif %}"
+           href="{% url 'schedevents:event_detail' plan.codename_id %}"
+           data-rsvp-status="{% if entry.user_rsvp %}{{ entry.user_rsvp.status }}{% endif %}">
+          <div class="ev-card-accent" data-color="{{ plan.color_hex|default:plan.indicator.color_hex }}"></div>
+          <div class="ev-card-body">
+            <!-- Date block -->
+            <div class="ev-card-date-block">
+              <div class="ev-card-date-day">{{ plan.planned_start_at|date:"j" }}</div>
+              <div class="ev-card-date-mon">{{ plan.planned_start_at|date:"M" }}</div>
+            </div>
+            <div class="ev-card-divider"></div>
+            <!-- Info -->
+            <div class="ev-card-info">
+              <div class="ev-card-title">{{ plan.title }}</div>
+              <div class="ev-card-meta">
+                <span class="ev-card-time" data-ts="{{ plan.planned_start_at.timestamp|floatformat:0 }}" data-ts-fmt="time">{{ plan.planned_start_at|time:"g:i A" }} {{ plan.timezone_name }}</span>
+                <span class="ev-card-indicator">{{ plan.indicator.prefix }} {{ plan.indicator.name }}</span>
+                {% if plan.status == 'CANCELLED' %}<span class="ev-card-badge ev-badge-notgoing">Cancelled</span>{% endif %}
+                {% if plan.status == 'COMPLETED' %}<span class="ev-card-badge ev-badge-done">Done</span>{% endif %}
+              </div>
+            </div>
+            <!-- Right side -->
+            <div class="ev-card-right">
+              {% if plan.status == 'ACTIVE' %}
+                <span class="ev-card-badge ev-badge-live">● Live</span>
+              {% elif entry.user_rsvp %}
+                {% with s=entry.user_rsvp.status %}
+                  {% if s == 'GOING' %}<span class="ev-card-badge ev-badge-going">✅ Going</span>
+                  {% elif s == 'MAYBE' %}<span class="ev-card-badge ev-badge-maybe">❓ Maybe</span>
+                  {% elif s == 'WAITLISTED' %}<span class="ev-card-badge ev-badge-wait">⏳ Waitlist</span>
+                  {% elif s == 'NOT_GOING' %}<span class="ev-card-badge ev-badge-notgoing">❌ No</span>{% endif %}
+                {% endwith %}
+              {% endif %}
+              {% if plan.capacity %}
+                <div>
+                  <div class="ev-card-rsvp-count">{{ entry.going_count }}/{{ plan.capacity }}</div>
+                  <div class="ev-cap-bar"><div class="ev-cap-fill {% if entry.is_full %}full{% endif %}" data-pct="{% widthratio entry.going_count plan.capacity 100 %}"></div></div>
+                </div>
+              {% else %}
+                <span class="ev-card-rsvp-count">{{ entry.going_count }} going</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ev-empty">
+    <div class="ev-empty-icon">{% if tab == 'mine' %}✅{% elif tab == 'past' %}🕐{% else %}📅{% endif %}</div>
+    <div class="ev-empty-title">
+      {% if tab == 'mine' %}No RSVPs yet
+      {% elif tab == 'past' %}No past events
+      {% else %}No upcoming events{% endif %}
+    </div>
+    <div class="ev-empty-sub">
+      {% if tab == 'mine' %}RSVP to an event and it will appear here.
+      {% elif tab == 'past' %}Past events will appear here once completed.
+      {% else %}Nothing scheduled right now.{% if can_create %} <a href="{% url 'schedevents:event_create' %}">Create one →</a>{% endif %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+
+// Apply dynamic colors and widths from data attributes
+document.querySelectorAll('[data-color]').forEach(function(el) {
+  el.style.background = el.getAttribute('data-color');
+});
+document.querySelectorAll('[data-pct]').forEach(function(el) {
+  el.style.width = el.getAttribute('data-pct') + '%';
+});
+
+// Mine tab: tally RSVP statuses from data-rsvp-status and show counts
+(function() {
+  var counts = { GOING: 0, MAYBE: 0, WAITLISTED: 0 };
+  document.querySelectorAll('[data-rsvp-status]').forEach(function(el) {
+    var s = el.getAttribute('data-rsvp-status');
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  function show(id, nId, n) {
+    if (!n) return;
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('ev-mine-stat-hidden'); document.getElementById(nId).textContent = n; }
+  }
+  show('mine-going-stat', 'mine-going-n', counts.GOING);
+  show('mine-maybe-stat', 'mine-maybe-n', counts.MAYBE);
+  show('mine-wait-stat',  'mine-wait-n',  counts.WAITLISTED);
+})();
+</script>
+{% endblock %}

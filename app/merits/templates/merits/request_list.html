@@ -1,0 +1,49 @@
+{% extends "merits/_base.html" %}
+{% block title %}All Requests{% endblock %}
+{% block wm_page %}Merits — All Requests{% endblock %}
+{% block subtitle %}Staff view of all merit & money requests{% endblock %}
+{% block content %}
+<div class="nav-links">
+  <a href="{% url 'merits:my_requests' %}">My Requests</a>
+  <a href="{% url 'merits:submit' %}" class="btn btn-primary">+ New Request</a>
+</div>
+
+<form method="get" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+  <select name="status" onchange="this.form.submit()" style="width:auto;margin:0;">
+    <option value="">All Statuses</option>
+    {% for val,label in Status.choices %}<option value="{{ val }}"{% if status_filter == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="kind" onchange="this.form.submit()" style="width:auto;margin:0;">
+    <option value="">All Types</option>
+    {% for val,label in Kind.choices %}<option value="{{ val }}"{% if kind_filter == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+</form>
+
+{% if requests %}
+<div style="overflow-x:auto;">
+<table>
+  <thead><tr>
+    <th>#</th><th>Type</th><th>Title</th><th>Requester</th><th>Amount</th><th>Status</th><th>Submitted</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for r in requests %}
+  <tr>
+    <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--ink-subtle);">#{{ r.pk }}</td>
+    <td><span class="badge badge-{{ r.kind|lower }}">{{ r.get_kind_display }}</span></td>
+    <td>{{ r.title }}</td>
+    <td>{{ r.requester }}</td>
+    <td style="font-family:'Space Mono',monospace;">
+      {% if r.amount %}{% if r.kind == "MONEY" %}{{ r.amount|floatformat:0 }} aUEC{% else %}{{ r.amount }} pts{% endif %}{% else %}TBD{% endif %}
+    </td>
+    <td><span class="badge badge-{{ r.status|lower }}">{{ r.get_status_display }}</span></td>
+    <td style="color:var(--ink-muted);font-size:0.78rem;">{{ r.submitted_at|date:"M j, Y" }}</td>
+    <td><a href="{% url 'merits:detail' r.pk %}" style="font-size:0.78rem;">View →</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">No requests found.</p>
+{% endif %}
+{% endblock %}

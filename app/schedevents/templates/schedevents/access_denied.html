@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Denied – BlightVeil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#7c3aed;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#a78bfa;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.box{max-width:400px;width:100%;padding:48px 32px;text-align:center;}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:10px;}
+p{color:var(--ink-muted);font-size:0.9rem;margin-bottom:28px;}
+a{display:inline-block;padding:9px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Access Denied</h1>
+    <p>{% if message %}{{ message }}{% else %}You don't have permission to access this area. Contact a staff member if you believe this is an error.{% endif %}</p>
+    <a href="{% url 'unifieduser:index' %}">← Back to Portal</a>
+  </div>
+</body>
+</html>

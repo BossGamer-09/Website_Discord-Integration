@@ -1,0 +1,105 @@
+{% extends "quartermaster/_base.html" %}
+{% block title %}Equipment Requests{% endblock %}
+{% block wm_page %}Loot — Equipment Requests{% endblock %}
+{% block subtitle %}Member requests for crafted equipment — review and assign units{% endblock %}
+
+{% block content %}
+<style>
+.eq-back{margin-bottom:20px;}
+.eq-back a{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;}
+.eq-back a:hover{background:var(--accent-light);}
+
+.eq-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.eq-filter a{font-size:0.78rem;padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--ink-muted);text-decoration:none;transition:all 0.15s;}
+.eq-filter a:hover,.eq-filter a.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+
+.eq-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.eq-hdr{display:grid;grid-template-columns:1fr 140px 120px 140px 120px;gap:12px;padding:8px 16px;font-size:0.67rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle);border-bottom:1px solid var(--border);}
+.eq-row{display:grid;grid-template-columns:1fr 140px 120px 140px 120px;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;}
+.eq-row:last-child{border-bottom:none;}
+.eq-row:hover{background:var(--accent-light);}
+
+.eq-item{font-weight:600;font-size:0.88rem;}
+.eq-item a{color:var(--ink);text-decoration:none;}
+.eq-item a:hover{color:var(--accent);}
+.eq-notes{font-size:0.78rem;color:var(--ink-muted);margin-top:2px;}
+
+.eq-requester{font-size:0.82rem;}
+.eq-date{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--ink-subtle);}
+.eq-unit{font-family:'Space Mono',monospace;font-size:0.72rem;}
+
+.status-badge{font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:10px;display:inline-block;}
+.status-badge.PENDING{background:#fef9c3;color:#854d0e;}
+.status-badge.APPROVED{background:#dcfce7;color:#15803d;}
+.status-badge.DENIED{background:#fee2e2;color:#b91c1c;}
+[data-theme="dark"] .status-badge.PENDING{background:#422006;color:#fbbf24;}
+[data-theme="dark"] .status-badge.APPROVED{background:#14532d;color:#4ade80;}
+[data-theme="dark"] .status-badge.DENIED{background:#450a0a;color:#f87171;}
+
+.eq-empty{padding:40px 20px;text-align:center;color:var(--ink-muted);font-size:0.9rem;background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);}
+
+.eq-thread-link{font-size:0.72rem;color:var(--accent);text-decoration:none;}
+.eq-thread-link:hover{text-decoration:underline;}
+</style>
+
+<div class="eq-back"><a href="{% url 'quartermaster:overview' %}">← Back to Overview</a></div>
+
+<div class="eq-filter">
+  <a href="?status=" {% if not status_filter %}class="active"{% endif %}>All</a>
+  {% for val, label in Status.choices %}
+  <a href="?status={{ val }}" {% if status_filter == val %}class="active"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+
+{% if requests %}
+<div class="eq-card">
+  <div class="eq-hdr">
+    <div>Item / Notes</div>
+    <div>Member</div>
+    <div>Status</div>
+    <div>Submitted</div>
+    <div>Assigned Unit</div>
+  </div>
+  {% for req in requests %}
+  <div class="eq-row">
+    <div>
+      <div class="eq-item">
+        <a href="{% url 'quartermaster:item_detail' req.stock_item.slug %}">{{ req.stock_item.name }}</a>
+      </div>
+      {% if req.notes %}<div class="eq-notes">{{ req.notes|truncatechars:80 }}</div>{% endif %}
+      {% if req.thread_id %}
+        <div style="margin-top:3px;">
+          <a class="eq-thread-link" href="https://discord.com/channels/@me/{{ req.thread_id }}" target="_blank" rel="noopener">↗ Discord thread</a>
+        </div>
+      {% endif %}
+    </div>
+    <div class="eq-requester">
+      {% if req.requester %}
+        {{ req.requester.display_name|default:req.requester.username }}
+      {% else %}—{% endif %}
+    </div>
+    <div>
+      <span class="status-badge {{ req.status }}">{{ req.get_status_display }}</span>
+      {% if req.reviewer_note %}
+        <div class="eq-notes" style="margin-top:3px;">{{ req.reviewer_note|truncatechars:60 }}</div>
+      {% endif %}
+    </div>
+    <div class="eq-date">
+      {{ req.submitted_at|date:"d M Y" }}<br>
+      {{ req.submitted_at|date:"H:i" }}
+    </div>
+    <div class="eq-unit">
+      {% if req.assigned_unit %}
+        #{{ req.assigned_unit.pk }}<br>
+        <span style="color:var(--ink-subtle);">{% for k,v in req.assigned_unit.stats.items %}{{ k }}: {{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+      {% else %}—{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="eq-empty">
+  No equipment requests{% if status_filter %} with status "{{ status_filter }}"{% endif %}.
+</div>
+{% endif %}
+{% endblock %}

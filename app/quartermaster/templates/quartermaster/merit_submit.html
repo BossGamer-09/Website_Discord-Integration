@@ -1,0 +1,108 @@
+{% extends "quartermaster/_base.html" %}
+{% block title %}Submit Request{% endblock %}
+{% block wm_page %}Merits — Submit{% endblock %}
+{% block subtitle %}Submit a new merit or money request{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+<form method="post">
+  {% csrf_token %}
+
+  <label>Request Type *</label>
+  <select name="kind" required style="margin-bottom:18px;">
+    {% for val,label in Kind.choices %}
+    <option value="{{ val }}"{% if post.kind == val %} selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <label>RSI Handle *</label>
+  <input type="text" name="rsi_handle" value="{{ post.rsi_handle|default:'' }}" maxlength="60" required placeholder="Your Roberts Space Industries username">
+
+  <div id="merit-fields" style="display:none;">
+    <label>Was this earned during an org event? *</label>
+    <div style="display:flex;gap:12px;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;color:var(--ink);">
+        <input type="radio" name="during_event" value="yes"{% if post.during_event == "yes" %} checked{% endif %}> Yes
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;color:var(--ink);">
+        <input type="radio" name="during_event" value="no"{% if post.during_event == "no" %} checked{% endif %}> No
+      </label>
+    </div>
+  </div>
+
+  <div id="money-fields" style="display:none;">
+    <label>What ship or item is this aUEC for? *</label>
+    <input type="text" name="purchase_for" value="{{ post.purchase_for|default:'' }}" maxlength="200" placeholder="e.g. Anvil Carrack, Hull C components…">
+  </div>
+
+  <div id="amount-wrap">
+    <label id="amount-label">Amount</label>
+    <input id="amount-input" type="text" name="amount" value="{{ post.amount|default:'' }}" autocomplete="off">
+    <div id="amount-hint" style="font-size:0.8rem;color:var(--ink-subtle);margin-top:4px;"></div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit Request</button>
+  <a href="{% url 'quartermaster:my_merit_requests' %}" class="btn" style="margin-left:8px;">Cancel</a>
+</form>
+</div>
+
+<script>
+(function () {
+  var kindSel       = document.querySelector('select[name="kind"]');
+  var input         = document.getElementById('amount-input');
+  var label         = document.getElementById('amount-label');
+  var hint          = document.getElementById('amount-hint');
+  var meritFields   = document.getElementById('merit-fields');
+  var moneyFields   = document.getElementById('money-fields');
+  var eventRadios   = document.querySelectorAll('input[name="during_event"]');
+  var purchaseInput = document.querySelector('input[name="purchase_for"]');
+
+  var PRISON_RE = /^(\d+h)?\s*(\d+m)?$/i;
+
+  function update() {
+    var kind = kindSel.value;
+    if (kind === 'MONEY') {
+      label.textContent = 'Amount (aUEC)';
+      hint.textContent  = 'Numbers only — e.g. 50000';
+      input.setAttribute('inputmode', 'numeric');
+      input.placeholder = '50000';
+      meritFields.style.display = 'none';
+      moneyFields.style.display = 'block';
+      eventRadios.forEach(function(r){ r.required = false; });
+      purchaseInput.required = true;
+    } else {
+      label.textContent = 'Amount (merit points or prison time)';
+      hint.textContent  = 'Enter a number (e.g. 120) or prison time like 1h 30m, 45m, 2h';
+      input.removeAttribute('inputmode');
+      input.placeholder = '120 or 1h 30m';
+      meritFields.style.display = 'block';
+      moneyFields.style.display = 'none';
+      eventRadios.forEach(function(r){ r.required = true; });
+      purchaseInput.required = false;
+    }
+  }
+
+  kindSel.addEventListener('change', update);
+  update();
+
+  document.querySelector('form').addEventListener('submit', function (e) {
+    var kind = kindSel.value;
+    var val  = input.value.trim();
+    if (kind === 'MONEY') {
+      if (!/^\d+$/.test(val)) {
+        e.preventDefault();
+        hint.textContent = '⚠ aUEC amount must be a whole number.';
+        hint.style.color = 'var(--red, #e53)';
+        input.focus();
+      }
+    } else {
+      if (val && !/^\d+$/.test(val) && !PRISON_RE.test(val)) {
+        e.preventDefault();
+        hint.textContent = '⚠ Enter a number or a time like 1h 30m or 45m.';
+        hint.style.color = 'var(--red, #e53)';
+        input.focus();
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

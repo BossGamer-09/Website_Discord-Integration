@@ -1,0 +1,158 @@
+{% extends "analytics/base.html" %}
+{% block title %}Leadership Activity{% endblock %}
+{% block nav_leadership %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🎖️ Leadership Activity</h1>
+  <p>Promotions, demotions, and disciplinary actions across the org.</p>
+  <span class="period-badge">📅 {{ period_label }}</span>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Promotions</div>
+    <div class="value green">{{ total_promotions }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Discipline Actions</div>
+    <div class="value {% if total_discipline > 10 %}amber{% else %}accent{% endif %}">{{ total_discipline }}</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Discipline by type -->
+  <div class="section-card">
+    <div class="section-header"><h2>Discipline by Type</h2></div>
+    {% if discipline_by_type %}
+    <div style="padding:16px 20px;">
+      {% for row in discipline_by_type %}
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:0.85rem;">
+            {% if row.action_type == "WARN" %}⚠️{% elif row.action_type == "MUTE" %}🔇{% elif row.action_type == "KICK" %}🥾{% elif row.action_type == "BAN" %}🔨{% elif row.action_type == "BLACKLIST" %}🚫{% elif row.action_type == "INACTIVE" %}💤{% elif row.action_type == "REPRIMAND" %}📋{% elif row.action_type == "NOTE" %}📝{% else %}🔧{% endif %}
+            {{ row.action_type|title }}
+          </span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--ink-muted);">{{ row.count }}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill amber" style="width:{% widthratio row.count discipline_by_type.0.count 100 %}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No discipline records in this period.</div>{% endif %}
+  </div>
+
+  <!-- Top leadership actors -->
+  <div class="section-card">
+    <div class="section-header"><h2>Most Active Leaders</h2></div>
+    {% if top_actors %}
+    <table class="data-table">
+      <thead><tr>
+        <th class="rank-col">#</th>
+        <th>Leader</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+      {% for row in top_actors %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>{{ row.actor__username }}</td>
+        <td>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill" style="width:{% widthratio row.actions top_actors.0.actions 100 %}%"></div></div>
+            <span class="bar-val">{{ row.actions }}</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No leadership actions logged.</div>{% endif %}
+  </div>
+</div>
+
+<!-- Recent promotions -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>Recent Promotions</h2>
+    <span class="count-badge">{{ recent_promotions|length }}</span>
+  </div>
+  {% if recent_promotions %}
+  <table class="data-table">
+    <thead><tr>
+      <th>Member</th>
+      <th>Current Rank</th>
+      <th>By</th>
+      <th>Summary</th>
+      <th>Date</th>
+    </tr></thead>
+    <tbody>
+    {% for log in recent_promotions %}
+    <tr>
+      <td>{{ log.subject.display_name }}</td>
+      <td>
+        {% if log.subject.rank %}
+          <span class="pill pill-blue">{{ log.subject.rank.prefix }} {{ log.subject.rank.name }}</span>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td>{% if log.actor %}{{ log.actor.display_name }}{% else %}<span style="color:var(--ink-subtle)">System</span>{% endif %}</td>
+      <td style="max-width:240px;font-size:0.82rem;color:var(--ink-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ log.summary }}">
+        {{ log.summary|truncatechars:60 }}
+      </td>
+      <td style="white-space:nowrap;font-size:0.82rem;color:var(--ink-muted);">{{ log.created_at|date:"Y-m-d" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No promotions in this period.</div>{% endif %}
+</div>
+
+<!-- Recent discipline -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>Recent Discipline Actions</h2>
+    <span class="count-badge">{{ recent_discipline|length }}</span>
+  </div>
+  {% if recent_discipline %}
+  <table class="data-table">
+    <thead><tr>
+      <th>Member</th>
+      <th>Action</th>
+      <th>Status</th>
+      <th>Issued By</th>
+      <th>Reason</th>
+      <th>Date</th>
+    </tr></thead>
+    <tbody>
+    {% for rec in recent_discipline %}
+    <tr>
+      <td>{{ rec.subject.display_name }}</td>
+      <td>
+        {% if rec.action_type == "WARN" %}<span class="pill pill-amber">⚠️ Warn</span>
+        {% elif rec.action_type == "MUTE" %}<span class="pill pill-amber">🔇 Mute</span>
+        {% elif rec.action_type == "KICK" %}<span class="pill pill-red">🥾 Kick</span>
+        {% elif rec.action_type == "BAN" %}<span class="pill pill-red">🔨 Ban</span>
+        {% elif rec.action_type == "BLACKLIST" %}<span class="pill pill-red">🚫 Blacklist</span>
+        {% elif rec.action_type == "REPRIMAND" %}<span class="pill pill-amber">📋 Reprimand</span>
+        {% elif rec.action_type == "NOTE" %}<span class="pill pill-gray">📝 Note</span>
+        {% else %}<span class="pill pill-gray">{{ rec.action_type }}</span>{% endif %}
+      </td>
+      <td>
+        {% if rec.status == "ACTIVE" %}<span class="pill pill-green">Active</span>
+        {% elif rec.status == "PARDONED" %}<span class="pill pill-gray">Pardoned</span>
+        {% else %}<span class="pill pill-gray">{{ rec.status }}</span>{% endif %}
+      </td>
+      <td>{% if rec.issued_by %}{{ rec.issued_by.display_name }}{% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}</td>
+      <td style="max-width:200px;font-size:0.82rem;color:var(--ink-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ rec.reason }}">
+        {{ rec.reason|truncatechars:50 }}
+      </td>
+      <td style="white-space:nowrap;font-size:0.82rem;color:var(--ink-muted);">{{ rec.issued_at|date:"Y-m-d" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No discipline actions in this period.</div>{% endif %}
+</div>
+{% endblock %}

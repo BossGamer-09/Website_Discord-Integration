@@ -1,0 +1,32 @@
+{% extends "quartermaster/_base.html" %}
+{% block title %}Before You Submit{% endblock %}
+{% block wm_page %}Merits — New Request{% endblock %}
+{% block subtitle %}One quick check before you continue{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;">
+  <div style="font-size:1.5rem;margin-bottom:12px;">👥</div>
+  <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px;">
+    Do you have <a href="{{ rsi_url }}" target="_blank" rel="noopener" style="color:var(--accent);">{{ username }}</a> on your RSI friends list?
+  </div>
+  <div style="color:var(--ink-muted);font-size:0.87rem;margin-bottom:20px;">
+    You must have this user added as a friend on Roberts Space Industries before submitting a merit or money request.
+    <br><br>
+    <a href="{{ rsi_url }}" target="_blank" rel="noopener" style="color:var(--accent);">View RSI profile →</a>
+  </div>
+
+  {% if denied %}
+  <div class="flash flash-error" style="margin-bottom:16px;">
+    You must have {{ username }} on your friends list to submit a request.
+    Please add them and come back.
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:flex;gap:10px;">
+      <button type="submit" name="confirmed" value="yes" class="btn btn-primary">Yes, they're on my list — Continue</button>
+      <button type="submit" name="confirmed" value="no"  class="btn btn-danger">No, I don't have them added</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

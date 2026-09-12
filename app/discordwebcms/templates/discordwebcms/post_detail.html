@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ post.title }} · Knowledge Base · BlightVeil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+  <style>
+    :root{
+      --ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;
+      --surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;
+      --accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;
+      --warning:#d97706;--warning-light:#fffbeb;--warning-border:#fde68a;
+      --code-bg:#f1f3f8;--radius:14px;
+      --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 24px rgba(0,0,0,.07);
+    }
+    [data-theme="dark"]{
+      --ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;
+      --surface:#0d0f14;--card-bg:#161922;--border:#252836;
+      --accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;
+      --warning:#f59e0b;--warning-light:#231c08;--warning-border:#78450a;
+      --code-bg:#1e2130;
+      --shadow:0 1px 4px rgba(0,0,0,.4),0 4px 24px rgba(0,0,0,.5);
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;transition:background .22s,color .18s;}
+
+    .theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:background .2s,border-color .2s,color .15s,transform .15s;}
+    .theme-toggle:hover{color:var(--ink);border-color:var(--accent);transform:scale(1.08);}
+    .theme-toggle .icon-sun{display:none;}
+    [data-theme="dark"] .theme-toggle .icon-sun{display:block;}
+    [data-theme="dark"] .theme-toggle .icon-moon{display:none;}
+
+    .kb-shell{max-width:780px;margin:0 auto;padding:48px 24px 100px;}
+
+    .page-wordmark{margin-bottom:6px;display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .bv-logo-img{height:36px;width:36px;object-fit:contain;border-radius:8px;}
+    .bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);}
+    .bv-wm-sep{color:var(--ink-subtle);font-size:1rem;font-weight:300;}
+    .bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;color:var(--accent);}
+
+    .breadcrumb{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--ink-subtle);margin-bottom:24px;flex-wrap:wrap;}
+    .breadcrumb a{color:var(--ink-muted);text-decoration:none;}
+    .breadcrumb a:hover{color:var(--accent);}
+    .breadcrumb-sep{color:var(--ink-subtle);}
+
+    /* header */
+    .post-header{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;padding:24px 26px 20px;box-shadow:var(--shadow);}
+    .post-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+    .post-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.45rem;color:var(--ink);margin:0;}
+    .post-actions{display:flex;gap:8px;flex-shrink:0;}
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.82rem;cursor:pointer;text-decoration:none;border:none;transition:all .15s;white-space:nowrap;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-hover);color:#fff;}
+    .btn-ghost{background:transparent;color:var(--ink-muted);border:1.5px solid var(--border);}
+    .btn-ghost:hover{background:var(--accent-light);color:var(--ink);border-color:var(--accent);}
+    .post-meta{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--ink-subtle);flex-wrap:wrap;}
+    .post-tags{display:flex;flex-wrap:wrap;gap:5px;}
+    .post-tag{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--accent-light);border:1px solid var(--border);color:var(--accent);}
+    .staff-lock{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--warning-light);color:var(--warning);padding:2px 8px;border-radius:99px;border:1px solid var(--warning-border);}
+    .version-badge{font-size:.72rem;color:var(--ink-subtle);padding:2px 8px;border:1px solid var(--border);border-radius:99px;}
+
+    /* entries */
+    .entry-list{border-left:1px solid var(--border);border-right:1px solid var(--border);}
+    .entry-block{background:var(--card-bg);border-bottom:1px solid var(--border);padding:22px 26px;}
+    .entry-block:last-child{border-radius:0 0 var(--radius) var(--radius);border-bottom:1px solid var(--border);}
+
+    /* markdown render */
+    .md-body{font-size:.95rem;line-height:1.7;color:var(--ink);}
+    .md-body h1,.md-body h2,.md-body h3,.md-body h4{font-family:'Syne',sans-serif;font-weight:700;color:var(--ink);margin:1.2em 0 .4em;}
+    .md-body h1{font-size:1.35rem;}
+    .md-body h2{font-size:1.15rem;}
+    .md-body h3{font-size:1rem;}
+    .md-body p{margin:.6em 0;}
+    .md-body a{color:var(--accent);text-decoration:underline;}
+    .md-body code{font-family:monospace;background:var(--code-bg);padding:1px 5px;border-radius:4px;font-size:.88em;}
+    .md-body pre{background:var(--code-bg);border-radius:8px;padding:14px 16px;overflow-x:auto;font-size:.85rem;}
+    .md-body pre code{background:none;padding:0;}
+    .md-body blockquote{border-left:3px solid var(--accent);margin:10px 0;padding:6px 14px;color:var(--ink-muted);font-style:italic;}
+    .md-body ul,.md-body ol{padding-left:1.4em;margin:.5em 0;}
+    .md-body li{margin:.25em 0;}
+    .md-body img{max-width:100%;border-radius:8px;margin:8px 0;}
+    .md-body table{width:100%;border-collapse:collapse;font-size:.88rem;margin:.8em 0;}
+    .md-body th,.md-body td{padding:7px 12px;border:1px solid var(--border);text-align:left;}
+    .md-body th{background:var(--surface);font-weight:600;}
+    .md-body hr{border:none;border-top:1px solid var(--border);margin:1.2em 0;}
+
+    /* image/file entries */
+    .entry-image img{max-width:100%;border-radius:10px;display:block;}
+    .entry-video a,.entry-file a{color:var(--accent);font-weight:500;}
+
+    .empty-state{text-align:center;padding:40px 24px;color:var(--ink-subtle);}
+  </style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="kb-shell">
+
+  <a href="/" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Knowledge Base</span>
+  </a>
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'discordwebcms:post_index' %}">Knowledge Base</a><span class="breadcrumb-sep">›</span>
+    <span>{{ post.title }}</span>
+  </div>
+
+  <div class="post-header">
+    <div class="post-header-top">
+      <h1 class="post-title">{{ post.title }}</h1>
+      {% if can_edit %}
+      <div class="post-actions">
+        <a href="{% url 'discordwebcms:post_edit' post.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'discordwebcms:post_history' post.pk %}" class="btn btn-ghost">History</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="post-meta">
+      {% if post.visibility == 'STAFF' %}<span class="staff-lock">Staff only</span>{% endif %}
+      {% if tags %}
+      <div class="post-tags">
+        {% for tag in tags %}<span class="post-tag">{{ tag.name }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <span>{{ post.created_at|date:"M j, Y" }}</span>
+      {% if can_edit %}<span class="version-badge">v{{ post.version }}</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="entry-list">
+    {% for entry in entries %}
+    <div class="entry-block">
+      {% if entry.entry_type == 'TEXT' %}
+        <div class="md-body" data-md="{{ entry.text_content|escapejs }}"></div>
+      {% elif entry.entry_type == 'VIDEO' %}
+        <div class="entry-video"><a href="{{ entry.video_url }}" target="_blank" rel="noopener">▶ {{ entry.video_url }}</a></div>
+      {% elif entry.entry_type == 'IMAGE' %}
+        <div class="entry-image">
+          {% if entry.image_file %}<img src="{{ entry.image_file.url }}" alt="Image">{% endif %}
+        </div>
+      {% elif entry.entry_type == 'FILE' %}
+        <div class="entry-file">
+          {% if entry.file_upload %}<a href="{{ entry.file_upload.url }}" download>⬇ {{ entry.file_upload.name|cut:"cms_post_files/" }}</a>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="entry-block"><div class="empty-state">No content yet.</div></div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+
+// Render markdown entries
+marked.setOptions({ breaks: true, gfm: true });
+document.querySelectorAll('.md-body[data-md]').forEach(function(el) {
+  el.innerHTML = DOMPurify.sanitize(marked.parse(el.getAttribute('data-md')));  // XSS-01
+  el.removeAttribute('data-md');
+});
+</script>
+</body>
+</html>

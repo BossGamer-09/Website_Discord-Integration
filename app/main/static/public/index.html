@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blightveil - Ruthless PVP Organization</title>
+    
+    <!-- Preload resources -->
+    <link rel="preload" href="/css/main.css" as="style">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    
+    <!-- Disable Cloudflare Rocket Loader -->
+    <script data-cfasync="false">
+        window._cf_chl_opt = {
+            cv_id: "1",
+            ctype: "non-iframe",
+            cvalue: ""
+        };
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="/images/bvl-logo.webp" alt="BlightVeil" class="nav-logo"> BLIGHTVEIL
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="#features" class="nav-link">Features</a>
+            <a href="/user/index/" class="nav-link" id="members-link">My Profile</a>
+
+            <!-- Auth State -->
+            <a href="/user/discord/login/" class="auth-btn" id="discord-login">Login with Discord</a>
+            <a href="#" class="auth-btn" id="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <h1>BLIGHTVEIL</h1>
+            <h2 class="hero-subtitle">RUTHLESS PVP ORGANIZATION</h2>
+            
+            <p class="hero-description">
+                A Ruthless PVP Organization in Star Citizen. Join us for Real Teamwork, Real Improvements, 
+                and Elite Fights across FPS, RTS, and MMO Games. If you want a challenge, growth, and domination - 
+                this is where you will find it.
+            </p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">100+</span>
+                    <span class="stat-label">ELITE MEMBERS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">OPERATIONS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">PVP</span>
+                    <span class="stat-label">FOCUS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">#1</span>
+                    <span class="stat-label">DISCIPLINE</span>
+                </div>
+            </div>
+
+            <a href="https://discord.gg/blightveil" class="discord-btn" target="_blank" rel="noopener">
+                🎮 JOIN OUR DISCORD
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">WHY BLIGHTVEIL?</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">⚔️</span>
+                    <h3>Ruthless PVP</h3>
+                    <p>Dominate in Star Citizen's most intense battles with coordinated team strategies and elite combat tactics.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🤝</span>
+                    <h3>Real Teamwork</h3>
+                    <p>Experience true cooperation with dedicated squadrons, strategic command structures, and military discipline.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">📈</span>
+                    <h3>Continuous Growth</h3>
+                    <p>Regular training sessions, after-action reviews, skill development programs, and performance tracking.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🏆</span>
+                    <h3>Elite Community</h3>
+                    <p>Join a community of dedicated players focused on excellence, discipline, and mutual improvement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Discord Section -->
+    <section class="discord-section">
+        <div class="container">
+            <h2 class="section-title">READY FOR THE CHALLENGE?</h2>
+            <p class="hero-description">
+                Our Discord is the central hub for all operations, announcements, training sessions, and community interactions. 
+                Join us to begin your journey toward elite PVP dominance and become part of something greater.
+            </p>
+            
+            <div class="text-center">
+                <a href="https://discord.gg/blightveil" class="discord-btn" target="_blank" rel="noopener">
+                    🎮 JOIN DISCORD NOW
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo"><img src="/images/bvl-logo.webp" alt="BlightVeil" class="footer-logo-img"> BLIGHTVEIL</div>
+                <p>Ruthless PVP Organization in Star Citizen</p>
+                
+                <div class="footer-links">
+                    <a href="/" class="footer-link">Home</a>
+                    <a href="#features" class="footer-link">Features</a>
+                    <a href="https://discord.gg/blightveil" class="footer-link" target="_blank" rel="noopener">Discord</a>
+                    <a href="/user/index/" class="footer-link" id="footer-members-link">My Profile</a>
+                </div>
+                
+                <div class="copyright">
+                    &copy; 2026 Blightveil. All rights reserved.<br>
+                    <span id="bot-status">Bot Status: Checking...</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/js/auth.js" data-cfasync="false"></script>
+    <script src="/js/main.js" data-cfasync="false"></script>
+</body>
+</html>

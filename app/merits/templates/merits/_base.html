@@ -1,0 +1,71 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Merits{% endblock %} – BlightVeil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;--red:#dc2626;--amber:#f59e0b;--green:#16a34a;--blue:#2563eb;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.shell{max-width:960px;margin:0 auto;padding:48px 24px 80px;}
+.portal-back{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:inline-block;margin-bottom:20px;transition:all 0.15s;}
+.portal-back:hover{background:var(--accent-light);}
+.wordmark{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;}
+.wm-sep{color:var(--ink-subtle);}
+.wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;color:var(--accent);}
+.subtitle{color:var(--ink-muted);font-size:0.88rem;margin-bottom:28px;}
+.nav-links{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
+.nav-links a,.btn{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;background:none;cursor:pointer;display:inline-block;}
+.nav-links a:hover,.btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-primary:hover{background:var(--accent-hover);color:#fff;}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red);}
+.flash{font-size:0.82rem;padding:8px 14px;border-radius:8px;margin-bottom:16px;}
+.flash-success{background:#dcfce7;color:#15803d;}[data-theme="dark"] .flash-success{background:#052e16;color:#4ade80;}
+.flash-error{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .flash-error{background:#1f0a0a;color:#f87171;}
+.badge{font-family:'Space Mono',monospace;font-size:0.7rem;padding:2px 9px;border-radius:20px;font-weight:700;white-space:nowrap;}
+.badge-pending{background:#fef9c3;color:#854d0e;}[data-theme="dark"] .badge-pending{background:#1c1404;color:#fbbf24;}
+.badge-approved{background:#dbeafe;color:#1e40af;}[data-theme="dark"] .badge-approved{background:#0f1e3a;color:#60a5fa;}
+.badge-fulfilled{background:#dcfce7;color:#15803d;}[data-theme="dark"] .badge-fulfilled{background:#052e16;color:#4ade80;}
+.badge-denied{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .badge-denied{background:#1f0a0a;color:#f87171;}
+.badge-money{background:#fef3c7;color:#92400e;}[data-theme="dark"] .badge-money{background:#1c1204;color:#fbbf24;}
+.badge-merit{background:#ede9fe;color:#5b21b6;}[data-theme="dark"] .badge-merit{background:#1e1040;color:#a78bfa;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+th{font-family:'Syne',sans-serif;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle);padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--accent-light);}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;}
+.field-label{font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle);margin-bottom:4px;}
+.field-val{font-size:0.9rem;margin-bottom:18px;}
+textarea,input[type=text],input[type=number],select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--ink);font-size:0.88rem;font-family:'DM Sans',sans-serif;margin-bottom:14px;}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);}
+label{display:block;font-size:0.8rem;font-weight:500;margin-bottom:4px;color:var(--ink-muted);}
+.empty{color:var(--ink-muted);font-size:0.88rem;padding:32px 0;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" type="button" aria-label="Toggle dark mode" onclick="(function(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('theme',t);})()">
+  <svg class="icon-sun" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm0-14V2m0 20v-2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12H4m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+  <svg class="icon-moon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+<div class="shell">
+  <a href="{% url 'unifieduser:index' %}" class="portal-back">← Back to Portal</a>
+  <div class="wordmark"><span class="wm-name">BlightVeil</span><span class="wm-sep">/</span><span class="wm-page">{% block wm_page %}Merits{% endblock %}</span></div>
+  <div class="subtitle">{% block subtitle %}Merit & Money Requests{% endblock %}</div>
+  {% if messages %}{% for m in messages %}<div class="flash flash-{% if m.tags %}{{ m.tags }}{% else %}success{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>

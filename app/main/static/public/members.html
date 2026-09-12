@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Blightveil</title>
+    
+    <!-- Preload resources -->
+    <link rel="preload" href="/css/main.css" as="style">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    
+    <!-- Disable Cloudflare Rocket Loader -->
+    <script data-cfasync="false">
+        window._cf_chl_opt = {
+            cv_id: "2",
+            ctype: "non-iframe",
+            cvalue: ""
+        };
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/" class="nav-brand-link"><img src="/images/bvl-logo.webp" alt="BlightVeil" class="nav-logo"> BLIGHTVEIL</a>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <button class="auth-btn" id="logout-btn">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="members-container">
+        <h1 class="profile-heading">MY PROFILE</h1>
+
+        <div id="member-content">
+            <div class="loading loading-centered"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo"><img src="/images/bvl-logo.webp" alt="BlightVeil" class="footer-logo-img"> BLIGHTVEIL</div>
+                <p>Ruthless PVP Organization</p>
+                
+                <div class="footer-links">
+                    <a href="/" class="footer-link">Home</a>
+                    <a href="https://discord.gg/blightveil" class="footer-link" target="_blank" rel="noopener">Discord</a>
+                </div>
+                
+                <div class="copyright">
+                    &copy; 2026 Blightveil. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/js/auth.js" data-cfasync="false"></script>
+    
+    <!-- Simple auth check -->
+    <script data-cfasync="false">
+        // Quick auth check
+        fetch('/api/user', { credentials: 'include' })
+            .then(res => {
+                if (!res.ok) {
+                    window.location.href = '/';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/';
+            });
+            
+        // Setup logout button
+        document.getElementById('logout-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            fetch('/auth/logout', {
+                method: 'GET',
+                credentials: 'include'
+            }).then(() => {
+                window.location.href = '/';
+            });
+        });
+    </script>
+</body>
+</html>

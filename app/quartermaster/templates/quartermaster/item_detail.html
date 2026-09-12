@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ item.name }} – Inventory – Blightveil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--red:#dc2626;--amber:#f59e0b;--green:#16a34a;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.shell{max-width:960px;margin:0 auto;padding:48px 24px 80px;}
+.back{font-size:0.82rem;color:var(--accent);text-decoration:none;margin-bottom:20px;display:inline-block;}
+.back:hover{text-decoration:underline;}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:4px;}
+.page-meta{color:var(--ink-muted);font-size:0.85rem;margin-bottom:8px;}
+.page-desc{color:var(--ink-muted);font-size:0.88rem;margin-bottom:28px;}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px;animation:fadeUp 0.3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);}
+.table{width:100%;border-collapse:collapse;}
+.table th{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-subtle);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+.table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.85rem;vertical-align:top;}
+.table tr:last-child td{border-bottom:none;}
+.badge{font-family:'Space Mono',monospace;font-size:0.7rem;padding:3px 10px;border-radius:20px;font-weight:700;}
+.badge-avail{background:#dcfce7;color:#15803d;}[data-theme="dark"] .badge-avail{background:#052e16;color:#4ade80;}
+.badge-assigned{background:#fef9c3;color:#854d0e;}[data-theme="dark"] .badge-assigned{background:#1c1404;color:#fbbf24;}
+.badge-lost{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .badge-lost{background:#1f0a0a;color:#f87171;}
+.badge-returned{background:#e0f2fe;color:#0369a1;}[data-theme="dark"] .badge-returned{background:#0a1929;color:#38bdf8;}
+.stat-chip{display:inline-block;font-family:'Space Mono',monospace;font-size:0.72rem;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:6px;margin:2px;}
+.action-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;}
+.inp{font-size:0.82rem;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--ink);outline:none;}
+.inp:focus{border-color:var(--accent);}
+.btn{font-size:0.8rem;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:all 0.15s;}
+.btn-assign{background:var(--accent);color:#fff;}.btn-assign:hover{opacity:0.88;}
+.btn-return{background:#dcfce7;color:#15803d;border:1px solid #86efac;}.btn-return:hover{opacity:0.88;}
+[data-theme="dark"] .btn-return{background:#052e16;color:#4ade80;border-color:#166534;}
+.btn-lost{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;}.btn-lost:hover{opacity:0.88;}
+[data-theme="dark"] .btn-lost{background:#1f0a0a;color:#f87171;border-color:#991b1b;}
+.flash{padding:10px 16px;border-radius:10px;font-size:0.85rem;margin-bottom:16px;}
+.flash-ok{background:#dcfce7;color:#15803d;}[data-theme="dark"] .flash-ok{background:#052e16;color:#4ade80;}
+.flash-err{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .flash-err{background:#1f0a0a;color:#f87171;}
+.log-link{font-size:0.8rem;color:var(--accent);text-decoration:none;}
+.log-link:hover{text-decoration:underline;}
+.empty{color:var(--ink-muted);font-size:0.88rem;padding:20px 16px;}
+/* craft blueprint */
+.craft-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);}
+.craft-type-badge{font-family:'Space Mono',monospace;font-size:0.68rem;padding:2px 9px;border-radius:12px;background:var(--accent-light);color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.mat-row td{padding:10px 16px;font-size:0.85rem;border-bottom:1px solid var(--border);}
+.mat-row:last-child td{border-bottom:none;}
+.mat-name{font-weight:500;}
+.mat-sup{font-size:0.7rem;color:var(--accent);vertical-align:super;}
+.temp-chip{font-family:'Space Mono',monospace;font-size:0.75rem;background:var(--card-bg);border:1px solid var(--border);padding:2px 7px;border-radius:6px;}
+.yield-chip{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--green);}
+[data-theme="dark"] .yield-chip{color:#4ade80;}
+.constraint-row{padding:8px 20px;font-size:0.78rem;color:var(--ink-muted);border-top:1px solid var(--border);font-style:italic;}
+.craft-notes{padding:10px 20px 14px;font-size:0.82rem;color:var(--ink-muted);}
+.craft-guide-link{font-size:0.8rem;color:var(--accent);text-decoration:none;}
+.craft-guide-link:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="(function(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('theme',t);})()">
+  <svg class="icon-sun" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm0-14V2m0 20v-2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12H4m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+  <svg class="icon-moon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<div class="shell">
+  <a class="back" href="{% url 'quartermaster:overview' %}">← Back to Inventory</a>
+  <div class="page-title">{{ item.name }}</div>
+  <div class="page-meta">{{ item.category|default:"Uncategorised" }} · {{ item.available_count }} available · {{ item.total_count }} total</div>
+  {% if item.description %}<div class="page-desc">{{ item.description }}</div>{% endif %}
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="flash {% if 'error' in m.tags %}flash-err{% else %}flash-ok{% endif %}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if blueprint %}
+  <div class="card" style="margin-bottom:20px;">
+    <div class="craft-header">
+      <span class="card-title">Craft Requirements</span>
+      <span class="craft-type-badge">{{ blueprint.get_item_type_display }}</span>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Min Temp</th>
+          <th>Yield</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mat in bp_materials %}
+        <tr class="mat-row">
+          <td class="mat-name">
+            {{ mat.material_name }}
+            {% if mat.constraint_group %}<sup class="mat-sup">{{ mat.constraint_group }}</sup>{% endif %}
+          </td>
+          <td><span class="temp-chip">{{ mat.temp_display }}</span></td>
+          <td><span class="yield-chip">{{ mat.yield_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty">No materials defined yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% for constraint in bp_constraints %}
+    <div class="constraint-row">
+      <sup class="mat-sup">{{ constraint.group_label }}</sup>
+      {% if constraint.note %}{{ constraint.note }}{% else %}Combined total must equal {{ constraint.combined_total }}{% endif %}
+    </div>
+    {% endfor %}
+    {% if blueprint.notes %}
+    <div class="craft-notes">{{ blueprint.notes }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Units</span>
+      <a class="log-link" href="{% url 'quartermaster:log_item' item.slug %}">View full log →</a>
+    </div>
+    {% if units %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Status</th>
+          <th>Stats</th>
+          <th>Holder</th>
+          <th>Notes</th>
+          {% if can_assign %}<th>Action</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for unit in units %}
+        <tr>
+          <td style="font-family:'Space Mono',monospace;color:var(--ink-muted);">{{ unit.pk }}</td>
+          <td>
+            {% if unit.status == Status.AVAILABLE %}<span class="badge badge-avail">Available</span>
+            {% elif unit.status == Status.ASSIGNED %}<span class="badge badge-assigned">Assigned</span>
+            {% elif unit.status == Status.LOST %}<span class="badge badge-lost">Lost</span>
+            {% elif unit.status == Status.RETURNED %}<span class="badge badge-returned">Returned</span>
+            {% else %}<span class="badge">{{ unit.get_status_display }}</span>{% endif %}
+          </td>
+          <td>
+            {% for k,v in unit.stats.items %}<span class="stat-chip">{{ k }}: {{ v }}</span>{% empty %}—{% endfor %}
+          </td>
+          <td>{{ unit.current_holder.display_name|default:"—" }}</td>
+          <td style="color:var(--ink-muted);font-size:0.8rem;">{{ unit.condition_notes|default:"" }}</td>
+          {% if can_assign %}
+          <td>
+            {% if unit.status == Status.AVAILABLE %}
+              <form method="post" action="{% url 'quartermaster:assign_unit' item.slug unit.uid %}" class="action-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="assign">
+                <input class="inp" name="recipient_name" placeholder="Member name" required style="width:130px;">
+                <input class="inp" name="notes" placeholder="Notes" style="width:100px;">
+                <button class="btn btn-assign" type="submit">Assign</button>
+              </form>
+            {% elif unit.status == Status.ASSIGNED %}
+              <form method="post" action="{% url 'quartermaster:assign_unit' item.slug unit.uid %}" class="action-form" style="display:inline-flex;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="return">
+                <input class="inp" name="notes" placeholder="Notes" style="width:100px;">
+                <button class="btn btn-return" type="submit">Return</button>
+              </form>
+              <form method="post" action="{% url 'quartermaster:assign_unit' item.slug unit.uid %}" class="action-form" style="display:inline-flex;margin-top:4px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="lost">
+                <button class="btn btn-lost" type="submit">Lost</button>
+              </form>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">No active units for this item.</p>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

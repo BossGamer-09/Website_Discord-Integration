@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Roster · {{ plan.title }}{% endblock %}
+
+{% block content %}
+{% include "schedevents/_shared_css.html" %}
+<style>
+  .roster-section { border-top:1px solid var(--border); }
+  .roster-section:first-child { border-top:none; }
+  .roster-header { padding:14px 24px 10px; display:flex; align-items:center; gap:10px; }
+  .roster-title { font-size:.8rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-muted); }
+  .count-pill { background:var(--border); color:var(--ink-muted); font-size:.7rem; padding:1px 7px; border-radius:99px; }
+  .roster-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  .roster-table th { text-align:left; padding:8px 24px; font-size:.72rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-subtle); border-bottom:1px solid var(--border); }
+  .roster-table td { padding:10px 24px; border-bottom:1px solid var(--border); color:var(--ink); }
+  .roster-table tr:last-child td { border-bottom:none; }
+  .roster-table tr:hover td { background:var(--accent-light); }
+  .outcome-badge { display:inline-flex; align-items:center; gap:4px; font-size:.7rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:2px 8px; border-radius:99px; }
+  .outcome-present  { background:var(--success-light); color:var(--success); border:1px solid var(--success-border); }
+  .outcome-late     { background:var(--warning-light); color:var(--warning); border:1px solid var(--warning-border); }
+  .outcome-absent   { background:var(--danger-light);  color:var(--danger);  border:1px solid var(--danger-border); }
+  .outcome-noshow   { background:var(--border); color:var(--ink-muted); }
+  .checkin-dot { width:7px; height:7px; border-radius:50%; background:var(--success); display:inline-block; margin-right:4px; }
+  .source-badge { font-size:.68rem; color:var(--ink-subtle); }
+  .td-subtle { color:var(--ink-subtle); }
+  .td-pos { color:var(--ink-subtle); font-weight:600; }
+  .roster-actions-bar { font-size:.78rem; color:var(--ink-subtle); }
+</style>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell">
+  <a href="{% url 'unifieduser:index' %}" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Events</span>
+  </a>
+  <div class="breadcrumb">
+    <a href="{% url 'unifieduser:index' %}">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'schedevents:dashboard' %}">Events</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'schedevents:event_detail' plan.codename_id %}">{{ plan.codename_id }}</a><span class="breadcrumb-sep">›</span>
+    <span>Roster</span>
+  </div>
+
+  {% if messages %}
+  <ul class="messages">{% for msg in messages %}<li class="{{ msg.tags }}">{{ msg }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="dot" style="background:{{ plan.indicator.color_hex }};"></span>
+      <div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:2px;">{{ plan.indicator.prefix }} {{ plan.indicator.name }}</div>
+        <h1>{{ plan.title }}</h1>
+      </div>
+      <div class="ms-auto">
+        {% if plan.status == 'DRAFT' %}<span class="badge badge-draft">Draft</span>
+        {% elif plan.status == 'PUBLISHED' %}<span class="badge badge-published">Published</span>
+        {% elif plan.status == 'ACTIVE' %}<span class="badge badge-active">● Live</span>
+        {% elif plan.status == 'COMPLETED' %}<span class="badge badge-completed">Completed</span>
+        {% elif plan.status == 'CANCELLED' %}<span class="badge badge-cancelled">Cancelled</span>{% endif %}
+      </div>
+    </div>
+
+    {% if option_sections %}
+      {# Per-option RSVP mode #}
+      {% for opt, rsvps in option_sections %}
+      <div class="roster-section">
+        <div class="roster-header">
+          <span class="roster-title">{{ opt.emoji }} {{ opt.label }}</span>
+          <span class="count-pill">{{ rsvps|length }}{% if opt.capacity_limit %} / {{ opt.capacity_limit }}{% endif %}</span>
+        </div>
+        {% if rsvps %}
+        <table class="roster-table">
+          <thead><tr>
+            <th>Member</th>
+            <th>RSVP'd</th>
+            <th>Check-In</th>
+            <th>Outcome</th>
+            {% if can_checkin %}<th>Actions</th>{% endif %}
+          </tr></thead>
+          <tbody>
+          {% for rsvp in rsvps %}
+          <tr>
+            <td>
+              {% if rsvp.checked_in %}<span class="checkin-dot" title="Checked in"></span>{% endif %}
+              {{ rsvp.user.display_name }}
+              {% if rsvp.status == 'WAITLISTED' %}<span class="source-badge">(waitlist)</span>{% endif %}
+            </td>
+            <td class="td-subtle"><span data-ts="{{ rsvp.rsvp_time.timestamp|floatformat:0 }}" data-ts-fmt="datetime">{{ rsvp.rsvp_time|date:"N j g:i A" }}</span></td>
+            <td>
+              {% if rsvp.check_in_time %}
+                <span data-ts="{{ rsvp.check_in_time.timestamp|floatformat:0 }}" data-ts-fmt="time">{{ rsvp.check_in_time|date:"g:i A" }}</span>
+                {% if rsvp.check_in_source %}<span class="source-badge">({{ rsvp.check_in_source }})</span>{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if rsvp.attendance_outcome == 'PRESENT' %}<span class="outcome-badge outcome-present">Present</span>
+              {% elif rsvp.attendance_outcome == 'LATE' %}<span class="outcome-badge outcome-late">Late</span>
+              {% elif rsvp.attendance_outcome == 'ABSENT' %}<span class="outcome-badge outcome-absent">Absent</span>
+              {% elif rsvp.attendance_outcome == 'LEFT_EARLY' %}<span class="outcome-badge outcome-late">Left Early</span>
+              {% else %}—{% endif %}
+            </td>
+            {% if can_checkin %}
+            <td>
+              {% if not rsvp.checked_in %}
+              <form method="post" action="{% url 'schedevents:event_force_checkin' plan.codename_id %}">
+                {% csrf_token %}<input type="hidden" name="rsvp_id" value="{{ rsvp.pk }}">
+                <button type="submit" class="btn btn-success btn-sm">✓ Check In</button>
+              </form>
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-hint" style="padding:12px 24px;">No sign-ups yet.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+    {% else %}
+      {# Standard Going / Maybe / Waitlist sections #}
+      {% if going %}
+      <div class="roster-section">
+        <div class="roster-header">
+          <span class="roster-title">✅ Going</span><span class="count-pill">{{ going|length }}</span>
+        </div>
+        <table class="roster-table">
+          <thead><tr>
+            <th>Member</th><th>RSVP'd</th><th>Check-In</th><th>Outcome</th>
+            {% if can_checkin %}<th>Actions</th>{% endif %}
+          </tr></thead>
+          <tbody>
+          {% for rsvp in going %}
+          <tr>
+            <td>
+              {% if rsvp.checked_in %}<span class="checkin-dot" title="Checked in"></span>{% endif %}
+              {{ rsvp.user.display_name }}
+            </td>
+            <td class="td-subtle"><span data-ts="{{ rsvp.rsvp_time.timestamp|floatformat:0 }}" data-ts-fmt="datetime">{{ rsvp.rsvp_time|date:"N j g:i A" }}</span></td>
+            <td>
+              {% if rsvp.check_in_time %}
+                <span data-ts="{{ rsvp.check_in_time.timestamp|floatformat:0 }}" data-ts-fmt="time">{{ rsvp.check_in_time|date:"g:i A" }}</span>
+                {% if rsvp.check_in_source %}<span class="source-badge">({{ rsvp.check_in_source }})</span>{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if rsvp.attendance_outcome == 'PRESENT' %}<span class="outcome-badge outcome-present">Present</span>
+              {% elif rsvp.attendance_outcome == 'LATE' %}<span class="outcome-badge outcome-late">Late</span>
+              {% elif rsvp.attendance_outcome == 'ABSENT' %}<span class="outcome-badge outcome-absent">Absent</span>
+              {% elif rsvp.attendance_outcome == 'LEFT_EARLY' %}<span class="outcome-badge outcome-late">Left Early</span>
+              {% else %}—{% endif %}
+            </td>
+            {% if can_checkin %}
+            <td>
+              {% if not rsvp.checked_in %}
+              <form method="post" action="{% url 'schedevents:event_force_checkin' plan.codename_id %}">
+                {% csrf_token %}<input type="hidden" name="rsvp_id" value="{{ rsvp.pk }}">
+                <button type="submit" class="btn btn-success btn-sm">✓ Check In</button>
+              </form>
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if maybe %}
+      <div class="roster-section">
+        <div class="roster-header">
+          <span class="roster-title">❓ Maybe</span><span class="count-pill">{{ maybe|length }}</span>
+        </div>
+        <table class="roster-table">
+          <thead><tr><th>Member</th><th>RSVP'd</th></tr></thead>
+          <tbody>
+          {% for rsvp in maybe %}
+          <tr>
+            <td>{{ rsvp.user.display_name }}</td>
+            <td class="td-subtle"><span data-ts="{{ rsvp.rsvp_time.timestamp|floatformat:0 }}" data-ts-fmt="datetime">{{ rsvp.rsvp_time|date:"N j g:i A" }}</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if waitlisted %}
+      <div class="roster-section">
+        <div class="roster-header">
+          <span class="roster-title">⏳ Waitlist</span><span class="count-pill">{{ waitlisted|length }}</span>
+        </div>
+        <table class="roster-table">
+          <thead><tr><th>Position</th><th>Member</th><th>RSVP'd</th></tr></thead>
+          <tbody>
+          {% for rsvp in waitlisted %}
+          <tr>
+            <td class="td-pos">{{ forloop.counter }}</td>
+            <td>{{ rsvp.user.display_name }}</td>
+            <td class="td-subtle"><span data-ts="{{ rsvp.rsvp_time.timestamp|floatformat:0 }}" data-ts-fmt="datetime">{{ rsvp.rsvp_time|date:"N j g:i A" }}</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {# Not Going always shown at the bottom regardless of mode #}
+    {% if not_going %}
+    <div class="roster-section">
+      <div class="roster-header">
+        <span class="roster-title">❌ Not Going</span><span class="count-pill">{{ not_going|length }}</span>
+      </div>
+      <table class="roster-table">
+        <thead><tr><th>Member</th><th>RSVP'd</th></tr></thead>
+        <tbody>
+        {% for rsvp in not_going %}
+        <tr>
+          <td>{{ rsvp.user.display_name }}</td>
+          <td class="td-subtle"><span data-ts="{{ rsvp.rsvp_time.timestamp|floatformat:0 }}" data-ts-fmt="datetime">{{ rsvp.rsvp_time|date:"N j g:i A" }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if total == 0 %}
+    <div class="empty-hint">No RSVPs yet.</div>
+    {% endif %}
+
+    <div class="card-actions">
+      <a href="{% url 'schedevents:event_detail' plan.codename_id %}" class="btn btn-ghost btn-sm">← Back to Event</a>
+      <div class="ms-auto roster-actions-bar">{{ total }} total RSVPs</div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+});
+</script>
+{% endblock %}

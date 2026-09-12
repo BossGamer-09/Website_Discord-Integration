@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ rep.subject|default:"Thread" }} – BlightVeil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;--success:#22c55e;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.page-shell{max-width:760px;margin:0 auto;padding:48px 24px 80px;}
+.page-wordmark{margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.bv-logo-img{height:36px;width:36px;object-fit:contain;border-radius:8px;flex-shrink:0;}
+.bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-0.02em;color:var(--ink);}
+.bv-wm-sep{color:var(--ink-subtle);font-size:1rem;font-weight:300;}
+.bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1.0rem;color:var(--accent);}
+.page-subtitle{color:var(--ink-muted);font-size:0.88rem;margin-bottom:36px;}
+.btn-back{margin-bottom:24px;display:inline-flex;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:0.85rem;cursor:pointer;text-decoration:none;border:none;transition:all 0.15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:var(--accent-hover);color:#fff;}
+.btn-ghost{background:transparent;color:var(--ink-muted);border:1px solid var(--border);}.btn-ghost:hover{background:var(--accent-light);color:var(--ink);}
+.btn-sm{padding:6px 12px;font-size:0.8rem;}
+.thread-subject{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--ink);margin-bottom:24px;}
+.mc-bubble{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.mc-bubble.outbound{border-left:3px solid var(--success);}
+.mc-bubble-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);gap:12px;}
+.mc-bubble-from{font-weight:700;font-size:0.88rem;color:var(--ink);}
+.mc-bubble-addr{font-size:0.8rem;color:var(--ink-muted);margin-top:2px;}
+.mc-bubble-date{font-size:0.78rem;color:var(--ink-subtle);flex-shrink:0;}
+.mc-outbound-tag{font-size:0.72rem;background:var(--success);color:#fff;padding:1px 7px;border-radius:99px;margin-left:6px;}
+.mc-bubble-body{padding:16px 18px;font-size:0.9rem;color:var(--ink);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+.mc-reply-card{background:var(--card-bg);border:1px solid var(--accent);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin-top:24px;}
+.mc-reply-header{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:700;font-size:0.92rem;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.mc-reply-body{padding:18px;}
+.mc-reply-textarea{width:100%;min-height:120px;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--ink);padding:10px 14px;font-size:0.88rem;resize:vertical;font-family:inherit;line-height:1.5;}
+.mc-reply-textarea:focus{outline:none;border-color:var(--accent);}
+.mc-reply-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:8px;}
+</style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell">
+
+  <a href="{% url 'mailclient:inbox' %}" class="btn btn-ghost btn-sm btn-back">← Back to Inbox</a>
+
+  <div class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Staff Inbox</span>
+  </div>
+  <div class="page-subtitle">{{ rep.subject|default:"(no subject)" }}</div>
+
+  {% for msg in messages %}
+  <div class="mc-bubble {% if msg.is_outbound %}outbound{% endif %}">
+    <div class="mc-bubble-header">
+      <div>
+        <div class="mc-bubble-from">
+          {% if msg.is_outbound %}BlightVeil Staff<span class="mc-outbound-tag">Sent</span>{% else %}{{ msg.display_name }}{% endif %}
+        </div>
+        <div class="mc-bubble-addr">
+          {% if msg.is_outbound %}To: {{ msg.to_address }}{% else %}{{ msg.from_address }}{% endif %}
+        </div>
+      </div>
+      <div class="mc-bubble-date">{{ msg.received_at|date:"M j, Y g:i A" }}</div>
+    </div>
+    <div class="mc-bubble-body">{{ msg.body_text|default:msg.body_html|striptags }}</div>
+  </div>
+  {% endfor %}
+
+  {% if can_reply %}
+  <div class="mc-reply-card">
+    <div class="mc-reply-header">
+      <i class="bi bi-reply-fill"></i> Reply to {{ rep.from_address }}
+    </div>
+    <div class="mc-reply-body">
+      <form method="post" action="{% url 'mailclient:reply' thread_root=thread_root %}">
+        {% csrf_token %}
+        <textarea name="body" class="mc-reply-textarea" placeholder="Write your reply..." required></textarea>
+        <div class="mc-reply-actions">
+          <a href="{% url 'mailclient:inbox' %}" class="btn btn-ghost btn-sm">Cancel</a>
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-send-fill"></i> Send Reply
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+</body>
+</html>

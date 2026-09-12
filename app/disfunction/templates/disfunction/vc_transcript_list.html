@@ -1,0 +1,59 @@
+{% extends "analytics/base.html" %}
+{% block analytics_title %}VC Transcripts{% endblock %}
+{% block nav_vc_transcripts %}active{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+.tr-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:.71rem;font-weight:500;}
+.tr-badge-PUBLIC{background:var(--success-light);color:var(--success);}
+.tr-badge-STAFF{background:var(--accent-light);color:var(--accent);}
+.tr-badge-LEADER{background:#fef3c7;color:#92400e;}
+.tr-badge-PROTECTED{background:#fde8ff;color:#7e22ce;}
+.tr-badge-other{background:var(--border);color:var(--ink-muted);}
+{% endblock %}
+
+{% block content %}
+<div class="an-page-header">
+  <h1>VC Transcripts</h1>
+  <p>Message history captured from deleted temporary voice channels.</p>
+</div>
+
+<div class="an-card">
+  <div class="an-card-header">
+    <h2>All Transcripts</h2>
+    <span class="an-count-badge">{{ transcripts|length }}</span>
+  </div>
+  {% if transcripts %}
+  <table class="an-table">
+    <thead>
+      <tr>
+        <th>Channel</th>
+        <th>Type</th>
+        <th>Messages</th>
+        <th>VC Created</th>
+        <th>Deleted</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in transcripts %}
+      <tr>
+        <td><strong>{{ t.channel_name }}</strong></td>
+        <td>
+          <span class="tr-badge tr-badge-{{ t.channel_type }}">{{ t.channel_type|title }}</span>
+        </td>
+        <td style="font-family:var(--font-mono);">{{ t.message_count }}</td>
+        <td style="color:var(--ink-muted);font-size:.82rem;">{{ t.vc_created_at|date:"Y-m-d H:i" }}</td>
+        <td style="color:var(--ink-muted);font-size:.82rem;">{{ t.deleted_at|date:"Y-m-d H:i" }}</td>
+        <td style="text-align:right;">
+          <a href="{% url 'disfunction:vc_transcript_detail' t.pk %}" style="font-size:.82rem;color:var(--accent);">View →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="an-empty">No transcripts yet — they appear here when a temp VC is deleted.</div>
+  {% endif %}
+</div>
+{% endblock %}

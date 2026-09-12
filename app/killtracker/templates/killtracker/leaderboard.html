@@ -1,0 +1,420 @@
+{% extends "bv_base.html" %}
+{% load static %}
+{% block title %}Crime Rankings · BlightVeil{% endblock %}
+{% block shell_class %}kt-scope{% endblock %}
+
+{% block extra_css %}
+/* Light theme by default; dark overrides below — so the board follows the site's
+   theme toggle (data-theme on <html>) instead of being permanently dark. */
+:root {
+  --kt-bg:      #f4f5f8;
+  --kt-panel:   #ffffff;
+  --kt-hi:      #eef1f6;
+  --kt-border:  #e2e6ee;
+  --kt-ink:     #1a1d24;
+  --kt-muted:   #6b7280;
+  --kt-red:     #e0322f;
+  --kt-green:   #128a4e;
+  --kt-amber:   #c77f00;
+  --kt-cyan:    #0e8fa8;
+}
+[data-theme="dark"] {
+  --kt-bg:      #0d1018;
+  --kt-panel:   #161b26;
+  --kt-hi:      #222b3d;
+  --kt-border:  #2a3142;
+  --kt-ink:     #e8edf5;
+  --kt-muted:   #8a96ab;
+  --kt-red:     #ff3b3b;
+  --kt-green:   #15a35c;
+  --kt-amber:   #ffb830;
+  --kt-cyan:    #00ffff;
+}
+.kt-scope { --accent: var(--kt-red); }
+
+/* This is a wide dashboard — break out of the 900px page shell and use (almost) the full
+   window. Without this the whole board is crushed into a narrow column and the feed collapses. */
+.bv-shell.kt-scope { max-width: 1600px; }
+@media (max-width: 1660px) { .bv-shell.kt-scope { max-width: none; margin: 0 12px; } }
+
+/* ── App-embedded: hide site chrome ───────────────────────────────────── */
+.app-embedded header,
+.app-embedded nav,
+.app-embedded .bv-navbar,
+.app-embedded .bv-nav,
+.app-embedded footer,
+.app-embedded .bv-footer,
+.app-embedded .bv-wordmark,
+.app-embedded .bv-subtitle { display: none !important; }
+.app-embedded body,
+.app-embedded main { padding-top: 0 !important; margin-top: 0 !important; }
+/* The desktop app is always dark — force the dark palette when embedded there, regardless
+   of the OS light/dark preference the webview might otherwise pick up. */
+.app-embedded {
+  --kt-bg:#0d1018; --kt-panel:#161b26; --kt-hi:#222b3d; --kt-border:#2a3142;
+  --kt-ink:#e8edf5; --kt-muted:#8a96ab; --kt-red:#ff3b3b; --kt-green:#15a35c;
+  --kt-amber:#ffb830; --kt-cyan:#00ffff;
+}
+
+/* ── Layout shell ─────────────────────────────────────────────────────── */
+.kt-lb { display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--kt-bg); min-height:100vh; }
+.kt-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.kt-title { font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--kt-muted); }
+.kt-title span { color:var(--kt-red); }
+
+/* ── Window selector ──────────────────────────────────────────────────── */
+.kt-wins { display:flex; gap:0; }
+.kt-win { background:var(--kt-hi); color:var(--kt-muted); border:1px solid var(--kt-border);
+          padding:5px 12px; font-size:.72rem; font-weight:600; cursor:pointer;
+          margin-left:-1px; transition:background .15s,color .15s; }
+.kt-win:first-child { border-radius:6px 0 0 6px; }
+.kt-win:last-child  { border-radius:0 6px 6px 0; }
+.kt-win.active { background:var(--kt-red); color:#fff; border-color:var(--kt-red); z-index:1; }
+
+/* ── Crime ranking columns ────────────────────────────────────────────── */
+/* auto-fit so columns wrap to as many as fit (min 150px) instead of squishing to 7-up */
+.kt-crimes { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+.kt-crime-col { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:10px; padding:10px 12px; }
+.kt-crime-head { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--kt-border); }
+.kt-crime-badge { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:.75rem; flex-shrink:0; }
+.kt-crime-name { font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; line-height:1.3; }
+.kt-crime-row { display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.kt-crime-row:last-child { border-bottom:0; }
+.kt-crime-rank { width:16px; font-size:.65rem; color:var(--kt-muted); font-family:monospace; flex-shrink:0; }
+.kt-crime-rank.gold { color:var(--kt-amber); font-weight:700; }
+.kt-crime-pilot { flex:1; font-size:.72rem; color:var(--kt-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-crime-count { font-size:.72rem; font-weight:700; font-family:monospace; flex-shrink:0; }
+.kt-crime-empty { font-size:.65rem; color:var(--kt-muted); font-style:italic; text-align:center; padding:6px 0; }
+
+/* ── Bottom three-panel row ───────────────────────────────────────────── */
+/* minmax(0,…) on the middle column lets the feed shrink without overflowing; the fixed
+   side columns are a touch narrower so the feed keeps real width. */
+.kt-bottom { display:grid; grid-template-columns:240px minmax(0,1fr) 320px; gap:10px; min-height:460px; }
+
+/* ── Crime points table ───────────────────────────────────────────────── */
+.kt-pts-panel { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:10px; display:flex; flex-direction:column; overflow:hidden; }
+.kt-panel-head { padding:10px 14px; border-bottom:1px solid var(--kt-border); display:flex; align-items:center; justify-content:space-between; }
+.kt-panel-label { font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--kt-muted); font-weight:700; }
+.kt-pts-body { flex:1; overflow-y:auto; }
+.kt-pts-row { display:grid; grid-template-columns:28px 1fr 56px; align-items:center; padding:6px 14px; border-bottom:1px solid rgba(255,255,255,.04); }
+.kt-pts-row:hover { background:var(--kt-hi); }
+.kt-pts-rank { font-size:.65rem; color:var(--kt-muted); font-family:monospace; font-weight:700; }
+.kt-pts-rank.top3 { color:var(--kt-amber); }
+.kt-pts-name { font-size:.75rem; color:var(--kt-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-pts { font-size:.72rem; font-weight:700; color:var(--kt-red); font-family:monospace; text-align:right; }
+.kt-pts-sub { font-size:.6rem; color:var(--kt-muted); }
+
+/* ── Global feed ──────────────────────────────────────────────────────── */
+.kt-feed-panel { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:10px; display:flex; flex-direction:column; overflow:hidden; }
+.kt-feed-body { flex:1; overflow-y:auto; }
+.kt-feed-entry { display:grid; grid-template-columns:36px 1fr auto; gap:8px; align-items:center; padding:8px 14px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; }
+.kt-feed-entry:hover { background:var(--kt-hi); }
+.kt-feed-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--kt-hi); display:flex; align-items:center; justify-content:center; color:var(--kt-muted); font-size:.7rem; overflow:hidden; }
+.kt-feed-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.kt-feed-info { min-width:0; }
+.kt-feed-crime { display:inline-flex; align-items:center; gap:4px; font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:4px; margin-bottom:3px; }
+.kt-feed-victim { font-size:.8rem; font-weight:600; color:var(--kt-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-feed-org { font-size:.65rem; color:var(--kt-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-feed-time { font-size:.62rem; color:var(--kt-muted); white-space:nowrap; text-align:right; }
+.kt-feed-delay { font-size:.6rem; color:var(--kt-muted); font-style:italic; }
+
+/* ── Right column: top killer / most hunted / chief victim ───────────── */
+.kt-right { display:flex; flex-direction:column; gap:8px; }
+
+.kt-stat-panel { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:10px; padding:12px 14px; }
+.kt-stat-name { font-size:1.1rem; font-weight:700; color:var(--kt-ink); margin-bottom:2px; }
+.kt-stat-sub { font-size:.65rem; color:var(--kt-muted); margin-bottom:10px; }
+.kt-stat-breakdown { display:flex; flex-direction:column; gap:3px; }
+.kt-stat-brow { display:flex; align-items:center; gap:6px; font-size:.68rem; }
+.kt-stat-blabel { width:120px; color:var(--kt-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-stat-bbar-wrap { flex:1; background:var(--kt-hi); border-radius:3px; height:5px; overflow:hidden; }
+.kt-stat-bbar { height:100%; border-radius:3px; }
+.kt-stat-bcnt { width:28px; text-align:right; font-weight:700; font-family:monospace; }
+
+.kt-hunted-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.73rem; }
+.kt-hunted-row:last-child { border-bottom:0; }
+.kt-hunted-org { color:var(--kt-ink); font-weight:500; }
+.kt-hunted-cnt { color:var(--kt-red); font-weight:700; font-family:monospace; }
+
+.kt-cv-name { font-size:1rem; font-weight:700; color:var(--kt-ink); }
+.kt-cv-cnt { font-size:.65rem; color:var(--kt-muted); margin-bottom:8px; }
+.kt-cv-row { display:flex; align-items:center; justify-content:space-between; font-size:.7rem; padding:3px 0; }
+.kt-cv-killer { color:var(--kt-muted); }
+.kt-cv-kcnt { color:var(--kt-amber); font-weight:700; font-family:monospace; }
+
+/* ── Kill locations ───────────────────────────────────────────────────── */
+.kt-loc-panel { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:10px; padding:12px 14px; }
+.kt-loc-rows { display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+.kt-loc-row { display:grid; grid-template-columns:1fr 48px 52px; gap:8px; align-items:center; font-size:.7rem; }
+.kt-loc-name { color:var(--kt-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kt-loc-bar-wrap { grid-column:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.kt-loc-full { display:grid; grid-template-columns:200px 1fr 48px 52px; gap:8px; align-items:center; font-size:.7rem; }
+.kt-loc-bar-outer { flex:1; background:var(--kt-hi); border-radius:3px; height:6px; overflow:hidden; }
+.kt-loc-bar-inner { height:100%; border-radius:3px; background:var(--kt-red); }
+.kt-loc-pct { color:var(--kt-muted); text-align:right; }
+.kt-loc-cnt { color:var(--kt-ink); font-weight:700; font-family:monospace; text-align:right; }
+
+/* ── Totals strip ─────────────────────────────────────────────────────── */
+.kt-totals { display:flex; gap:10px; }
+.kt-total-card { background:var(--kt-panel); border:1px solid var(--kt-border); border-radius:8px;
+                 padding:8px 18px; display:flex; flex-direction:column; align-items:center; }
+.kt-total-val { font-size:1.1rem; font-weight:700; color:var(--kt-red); font-family:monospace; }
+.kt-total-lbl { font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; color:var(--kt-muted); }
+
+.kt-empty { color:var(--kt-muted); font-size:.7rem; font-style:italic; text-align:center; padding:12px 0; }
+
+@media(max-width:1100px){
+  .kt-crimes { grid-template-columns:repeat(4,1fr); }
+  .kt-bottom { grid-template-columns:1fr 1fr; }
+  .kt-right { grid-column:1/-1; flex-direction:row; flex-wrap:wrap; }
+}
+@media(max-width:700px){
+  .kt-crimes { grid-template-columns:repeat(2,1fr); }
+  .kt-bottom { grid-template-columns:1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="kt-lb">
+
+  <!-- Header -->
+  <div class="kt-header">
+    <div>
+      <div class="kt-title">▪ <span>BlightVeil</span> Crime Rankings</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="kt-totals">
+        <div class="kt-total-card"><div class="kt-total-val" id="statKills">—</div><div class="kt-total-lbl">Total Kills</div></div>
+        <div class="kt-total-card"><div class="kt-total-val" id="statIncaps" style="color:#b8860b;">—</div><div class="kt-total-lbl">Incaps</div></div>
+        <div class="kt-total-card"><div class="kt-total-val" id="statKillers">—</div><div class="kt-total-lbl">Operators</div></div>
+        <div class="kt-total-card"><div class="kt-total-val" id="statVictims">—</div><div class="kt-total-lbl">Targets</div></div>
+      </div>
+      <div class="kt-wins">
+        <button class="kt-win" data-win="1d">24h</button>
+        <button class="kt-win active" data-win="7d">7d</button>
+        <button class="kt-win" data-win="30d">30d</button>
+        <button class="kt-win" data-win="90d">90d</button>
+        <button class="kt-win" data-win="all">All-Time</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crime ranking columns -->
+  <div class="kt-crimes" id="crimeRankings">
+    <div class="kt-crime-col"><div class="kt-crime-empty">Loading…</div></div>
+  </div>
+
+  <!-- Bottom: points / feed / right panels -->
+  <div class="kt-bottom">
+
+    <!-- Crime points -->
+    <div class="kt-pts-panel">
+      <div class="kt-panel-head">
+        <span class="kt-panel-label">Crime Points</span>
+        <span class="kt-panel-label" style="color:var(--kt-muted);font-size:.58rem;">Rank &nbsp; Pts</span>
+      </div>
+      <div class="kt-pts-body" id="crimePoints">
+        <div class="kt-empty">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Global feed -->
+    <div class="kt-feed-panel">
+      <div class="kt-panel-head">
+        <span class="kt-panel-label">Global Feed</span>
+        <span class="kt-feed-delay">100 latest · live</span>
+      </div>
+      <div class="kt-feed-body" id="globalFeed">
+        <div class="kt-empty">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Right: top killer / most hunted / chief victim -->
+    <div class="kt-right">
+
+      <div class="kt-stat-panel" id="topKillerPanel">
+        <div class="kt-panel-head" style="padding:0 0 8px;margin-bottom:8px;border-bottom:1px solid var(--kt-border);">
+          <span class="kt-panel-label">Top Killer</span>
+        </div>
+        <div id="topKiller"><div class="kt-empty">Loading…</div></div>
+      </div>
+
+      <div class="kt-stat-panel" id="mostHuntedPanel">
+        <div class="kt-panel-head" style="padding:0 0 8px;margin-bottom:8px;border-bottom:1px solid var(--kt-border);">
+          <span class="kt-panel-label">Most Hunted</span>
+        </div>
+        <div id="mostHunted"><div class="kt-empty">Loading…</div></div>
+      </div>
+
+      <div class="kt-stat-panel" id="chiefVictimPanel">
+        <div class="kt-panel-head" style="padding:0 0 8px;margin-bottom:8px;border-bottom:1px solid var(--kt-border);">
+          <span class="kt-panel-label">Chief Victim</span>
+        </div>
+        <div id="chiefVictim"><div class="kt-empty">Loading…</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Kill locations -->
+  <div class="kt-loc-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span class="kt-panel-label">Kill Locations</span>
+      <span class="kt-panel-label" style="color:var(--kt-muted);font-size:.58rem;">Distribution</span>
+    </div>
+    <div class="kt-loc-rows" id="killLocations"><div class="kt-empty">Loading…</div></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if app_embedded %}
+document.documentElement.classList.add('app-embedded');
+{% endif %}
+
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function crimeRankingsHtml(rankings) {
+  return Object.values(rankings).map(c => {
+    const rows = c.rows.length
+      ? c.rows.map((r,i) => `
+          <div class="kt-crime-row">
+            <span class="kt-crime-rank ${i===0?'gold':''}">${i+1}</span>
+            <span class="kt-crime-pilot">${esc(r.killer_name)}</span>
+            <span class="kt-crime-count" style="color:${esc(c.color)}">${r.count}</span>
+          </div>`).join('')
+      : '<div class="kt-crime-empty">No activity</div>';
+    return `
+      <div class="kt-crime-col">
+        <div class="kt-crime-head">
+          <div class="kt-crime-badge" style="background:${esc(c.color)}22;color:${esc(c.color)}">${esc(c.icon)}</div>
+          <div class="kt-crime-name" style="color:${esc(c.color)}">${esc(c.label)}</div>
+        </div>
+        ${rows}
+      </div>`;
+  }).join('');
+}
+
+function crimePointsHtml(rows) {
+  if (!rows.length) return '<div class="kt-empty">No data</div>';
+  return rows.map((r,i) => `
+    <div class="kt-pts-row">
+      <span class="kt-pts-rank ${i<3?'top3':''}">0${i+1}</span>
+      <span class="kt-pts-name">${esc(r.killer_name)}</span>
+      <div>
+        <div class="kt-pts">${(r.total_points||0).toLocaleString()}</div>
+        <div class="kt-pts-sub">${r.total_kills} kills</div>
+      </div>
+    </div>`).join('');
+}
+
+function feedHtml(feed) {
+  if (!feed.length) return '<div class="kt-empty">No activity</div>';
+  return feed.map(e => {
+    const avatar = e.victim_avatar
+      ? `<div class="kt-feed-avatar"><img src="${esc(e.victim_avatar)}" alt="" loading="lazy"></div>`
+      : `<div class="kt-feed-avatar">?</div>`;
+    const killer = e.anonymous ? '<span style="color:var(--kt-muted)">REDACTED</span>' : esc(e.killer);
+    return `
+      <div class="kt-feed-entry">
+        ${avatar}
+        <div class="kt-feed-info">
+          <div><span class="kt-feed-crime" style="background:${esc(e.crime_color)}22;color:${esc(e.crime_color)}">${esc(e.crime_icon)} ${esc(e.crime_label)}</span></div>
+          <div class="kt-feed-victim">${esc(e.victim)}</div>
+          <div class="kt-feed-org">${esc(e.victim_org) || 'No organization'} &mdash; by ${killer}</div>
+        </div>
+        <div class="kt-feed-time">${esc(e.time)}</div>
+      </div>`;
+  }).join('');
+}
+
+function topKillerHtml(tk) {
+  if (!tk) return '<div class="kt-empty">No data</div>';
+  const maxCount = Math.max(...tk.breakdown.map(b => b.count), 1);
+  const rows = tk.breakdown.filter(b => b.count > 0).map(b => `
+    <div class="kt-stat-brow">
+      <span class="kt-stat-blabel" style="color:${esc(b.color)}">${esc(b.label)}</span>
+      <div class="kt-stat-bbar-wrap">
+        <div class="kt-stat-bbar" style="width:${Math.round(b.count/maxCount*100)}%;background:${esc(b.color)}"></div>
+      </div>
+      <span class="kt-stat-bcnt" style="color:${esc(b.color)}">${b.count}</span>
+    </div>`).join('');
+  return `
+    <div class="kt-stat-name">${esc(tk.name)}</div>
+    <div class="kt-stat-sub">${tk.total} confirmed kills</div>
+    <div class="kt-stat-breakdown">${rows || '<div class="kt-empty">No crime breakdown yet</div>'}</div>`;
+}
+
+function mostHuntedHtml(rows) {
+  if (!rows.length) return '<div class="kt-empty">No data</div>';
+  return rows.map(r => `
+    <div class="kt-hunted-row">
+      <span class="kt-hunted-org">${esc(r.victim_org)}</span>
+      <span class="kt-hunted-cnt">${r.count}</span>
+    </div>`).join('');
+}
+
+function chiefVictimHtml(cv) {
+  if (!cv) return '<div class="kt-empty">No data</div>';
+  const killers = cv.top_killers.map(k => `
+    <div class="kt-cv-row">
+      <span class="kt-cv-killer">${esc(k.killer_name)}</span>
+      <span class="kt-cv-kcnt">${k.count}</span>
+    </div>`).join('');
+  return `
+    <div class="kt-cv-name">${esc(cv.name)}</div>
+    <div class="kt-cv-cnt">Eliminated ${cv.count} times</div>
+    ${killers}`;
+}
+
+function killLocationsHtml(locs) {
+  if (!locs.length) return '<div class="kt-empty">No location data</div>';
+  const colors = ['#ff3b3b','#ff6b35','#ffb830','#4a9eff','#15a35c','#a855f7','#00ffff','#f5a623','#8a96ab','#e8edf5'];
+  return locs.map((l,i) => `
+    <div class="kt-loc-full">
+      <span class="kt-loc-name" title="${esc(l.name)}">${esc(l.name)}</span>
+      <div class="kt-loc-bar-outer"><div class="kt-loc-bar-inner" style="width:${l.pct}%;background:${colors[i%colors.length]}"></div></div>
+      <span class="kt-loc-pct">${l.pct}%</span>
+      <span class="kt-loc-cnt">${l.count.toLocaleString()}</span>
+    </div>`).join('');
+}
+
+async function load(win) {
+  try {
+    const r = await fetch(`{% url 'killtracker:leaderboard_data' %}?window=${win}`);
+    const d = await r.json();
+
+    document.getElementById('statKills').textContent   = (d.totals.total_kills   || 0).toLocaleString();
+    document.getElementById('statIncaps').textContent  = (d.totals.total_incaps  || 0).toLocaleString();
+    document.getElementById('statKillers').textContent = (d.totals.unique_killers || 0).toLocaleString();
+    document.getElementById('statVictims').textContent = (d.totals.unique_victims || 0).toLocaleString();
+
+    document.getElementById('crimeRankings').innerHTML = crimeRankingsHtml(d.crime_rankings || {});
+    document.getElementById('crimePoints').innerHTML   = crimePointsHtml(d.crime_points || []);
+    document.getElementById('globalFeed').innerHTML    = feedHtml(d.global_feed || []);
+    document.getElementById('topKiller').innerHTML     = topKillerHtml(d.top_killer);
+    document.getElementById('mostHunted').innerHTML    = mostHuntedHtml(d.most_hunted || []);
+    document.getElementById('chiefVictim').innerHTML   = chiefVictimHtml(d.chief_victim);
+    document.getElementById('killLocations').innerHTML = killLocationsHtml(d.kill_locations || []);
+  } catch(e) {
+    console.error('Leaderboard load failed:', e);
+  }
+}
+
+document.querySelectorAll('.kt-win').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.kt-win').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    load(b.dataset.win);
+  });
+});
+
+load('7d');
+setInterval(() => {
+  const active = document.querySelector('.kt-win.active');
+  if (active) load(active.dataset.win);
+}, 60000);
+</script>
+{% endblock %}

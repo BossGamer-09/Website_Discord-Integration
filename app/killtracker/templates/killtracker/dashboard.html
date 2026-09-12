@@ -1,0 +1,123 @@
+{% extends "bv_base.html" %}
+{% load static %}
+{% block title %}KillTracker · BlightVeil{% endblock %}
+{% block shell_class %}kt-scope{% endblock %}
+
+{% block extra_css %}
+.kt-scope{ --accent:#ff3b3b; --accent-light:rgba(255,59,59,.10); --accent-hover:#ff5c5c; }
+[data-theme="dark"] .kt-scope{ --accent-light:rgba(255,59,59,.16); --accent-hover:#ff6b6b; }
+.kt-toolbar{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin:4px 0 18px; }
+.kt-key{ font-family:var(--font-mono); font-size:.8rem; background:var(--accent-light); padding:2px 8px; border-radius:4px; letter-spacing:.02em; }
+.kt-key.kt-off{ color:var(--ink-muted); background:transparent; text-decoration:line-through; }
+.kt-device{ display:flex; align-items:center; gap:9px; font-weight:600; }
+.kt-device .kt-mono{ font-family:var(--font-mono); }
+.kt-pill{ display:inline-block; padding:2px 11px; border-radius:999px; font-size:.72rem; font-weight:600; border:1px solid; white-space:nowrap; }
+.kt-pill.on{ color:#15a35c; border-color:#15a35c; background:rgba(21,163,92,.10); }
+.kt-pill.off{ color:var(--ink-muted); border-color:var(--border); }
+.kt-pill.btn{ cursor:pointer; }
+.kt-inline{ display:inline; margin:0; }
+.kt-muted{ color:var(--ink-muted); }
+.kt-note{ color:var(--ink-muted); font-size:.82rem; margin-top:12px; }
+.kt-reveal{ border:1px solid #15a35c; color:#15a35c; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:.9rem; }
+.kt-reveal .kt-key{ background:transparent; color:var(--ink); user-select:all; }
+.kt-gen summary{ cursor:pointer; color:var(--ink-muted); font-size:.85rem; margin-top:14px; }
+.kt-genrow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+.kt-revoked-row td{ opacity:.5; }
+.kt-section-title{ font-family:var(--font-display); font-size:1.15rem; margin:0 0 4px; }
+{% endblock %}
+
+{% block content %}
+<div class="bv-wordmark">
+  <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+  <span class="bv-wm-name">BlightVeil</span>
+  <span class="bv-wm-sep">›</span>
+  <span class="bv-wm-page">KillTracker</span>
+</div>
+
+<div class="kt-toolbar">
+  <a class="bv-btn" href="/user/index/">← Portal</a>
+  <a class="bv-btn bv-btn-primary" href="{% url 'killtracker:leaderboard' %}">Leaderboard</a>
+</div>
+
+{% if client_release %}
+<div class="bv-card">
+  <div class="bv-card-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:220px;">
+      <h2 class="kt-section-title">KillTracker app</h2>
+      <p class="bv-subtitle">Current version <strong>{{ client_release.version }}</strong>{% if client_release.notes %} — {{ client_release.notes }}{% endif %}. Installed copies update themselves automatically.</p>
+    </div>
+    {% if client_has_nosound %}
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;">
+      <a class="bv-btn bv-btn-primary bv-btn-lg" href="{% url 'killtracker:client_download' %}">⬇ Download (with sounds)</a>
+      <a class="bv-btn bv-btn-lg" href="{% url 'killtracker:client_download' %}?variant=nosound">⬇ Download (no sounds)</a>
+      <span class="bv-subtitle" style="font-size:.72rem;text-align:center;">Same app — "no sounds" skips the bundled kill sounds (smaller, silent).</span>
+    </div>
+    {% else %}
+    <a class="bv-btn bv-btn-primary bv-btn-lg" href="{% url 'killtracker:client_download' %}">⬇ Download for Windows</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="bv-card">
+  <div class="bv-card-body">
+    <h2 class="kt-section-title">Devices</h2>
+    <p class="bv-subtitle">Each time you sign in from the KillTracker app, the device appears here. Revoking signs it out on its next check-in — use it if a PC is lost or you want to force a re-login.</p>
+
+    <table class="bv-table" style="margin-top:16px;">
+      <thead>
+        <tr><th>Device</th><th>Token</th><th>Added</th><th>Last active</th><th>Auto-renew</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for k in keys %}
+        <tr>
+          <td><span class="kt-device">{{ k.label|default:"Unnamed device" }}</span></td>
+          <td><span class="kt-key">{{ k.key_prefix }}…</span></td>
+          <td class="kt-muted">{{ k.created_at|date:"M j, Y" }}</td>
+          <td class="kt-muted">{{ k.last_used_at|date:"M j, Y H:i"|default:"—" }}</td>
+          <td>
+            <form method="post" action="{% url 'killtracker:toggle_renew' k.id %}" class="kt-inline">{% csrf_token %}
+              <button type="submit" class="kt-pill btn {% if k.auto_renew %}on{% else %}off{% endif %}">{% if k.auto_renew %}On{% else %}Off{% endif %}</button>
+            </form>
+          </td>
+          <td><span class="kt-pill on">Active</span></td>
+          <td style="text-align:right;">
+            <form method="post" action="{% url 'killtracker:revoke_key' k.id %}" class="kt-inline">{% csrf_token %}
+              <button type="submit" class="bv-btn">Sign out</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="bv-empty">No devices yet. Open the KillTracker app and click <strong>Login with Discord</strong>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bv-card">
+  <div class="bv-card-body">
+    <h2 class="kt-section-title">Recent kills</h2>
+    <p class="bv-subtitle">Your last 25 recorded kills.</p>
+    <table class="bv-table" style="margin-top:14px;">
+      <thead>
+        <tr><th>Time</th><th>Victim</th><th>Weapon</th><th>Ship</th><th>Zone</th><th>Mode</th></tr>
+      </thead>
+      <tbody>
+      {% for e in recent_kills %}
+        <tr>
+          <td class="kt-muted kt-mono" style="font-family:var(--font-mono);font-size:.8rem;">{{ e.time|date:"M j, H:i" }}</td>
+          <td style="color:var(--accent);font-weight:600;">{{ e.victim }}</td>
+          <td>{{ e.weapon|default:"—" }}</td>
+          <td>{{ e.killers_ship|default:"—" }}</td>
+          <td class="kt-muted">{{ e.zone|default:"—" }}</td>
+          <td><span class="kt-pill off">{{ e.game_mode }}</span></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="bv-empty">No kills recorded yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

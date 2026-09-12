@@ -1,0 +1,210 @@
+{% extends "analytics/base.html" %}
+{% block analytics_title %}{{ transcript.channel_name }} Transcript{% endblock %}
+{% block nav_vc_transcripts %}active{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+/* Discord-style chat */
+.tr-chat{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.tr-msg{display:flex;gap:14px;padding:6px 20px;transition:background .1s;}
+.tr-msg:hover{background:var(--surface-raised);}
+.tr-msg.new-group{padding-top:16px;}
+.tr-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;object-fit:cover;}
+.tr-avatar-placeholder{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--accent);}
+.tr-continuation .tr-avatar,.tr-continuation .tr-avatar-placeholder{visibility:hidden;}
+.tr-msg-body{flex:1;min-width:0;}
+.tr-msg-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;}
+.tr-continuation .tr-msg-meta{display:none;}
+.tr-msg-author{font-weight:600;font-size:.875rem;color:var(--ink);}
+.tr-msg-author.is-bot{color:var(--accent);}
+.tr-bot-tag{display:inline-flex;align-items:center;padding:1px 5px;background:var(--accent);color:#fff;border-radius:3px;font-size:.62rem;font-weight:700;letter-spacing:.04em;margin-left:3px;vertical-align:middle;}
+.tr-msg-time{font-size:.72rem;color:var(--ink-subtle);}
+.tr-msg-content{font-size:.875rem;color:var(--ink);white-space:pre-wrap;word-break:break-word;line-height:1.5;}
+.tr-msg-content.empty{color:var(--ink-subtle);font-style:italic;}
+
+/* Attachments */
+.tr-attachments{margin-top:8px;display:flex;flex-direction:column;gap:8px;}
+
+/* Image attachments */
+.tr-img-wrap{position:relative;display:inline-block;max-width:400px;}
+.tr-img{max-width:400px;max-height:300px;border-radius:6px;border:1px solid var(--border);display:block;cursor:zoom-in;transition:opacity .15s;}
+.tr-img:hover{opacity:.9;}
+.tr-img-expired{display:none;align-items:center;gap:8px;padding:10px 14px;background:var(--surface-raised);border:1px solid var(--border);border-radius:6px;font-size:.78rem;color:var(--ink-muted);max-width:400px;}
+.tr-img-expired.visible{display:flex;}
+.tr-img-name{font-size:.74rem;color:var(--ink-subtle);margin-top:3px;}
+
+/* File attachments (non-image) */
+.tr-file{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface-raised);border:1px solid var(--border);border-radius:6px;text-decoration:none;transition:border .14s;max-width:400px;}
+.tr-file:hover{border-color:var(--accent);text-decoration:none;}
+.tr-file-icon{font-size:1.1rem;flex-shrink:0;}
+.tr-file-info{display:flex;flex-direction:column;min-width:0;}
+.tr-file-name{font-size:.82rem;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tr-file-size{font-size:.72rem;color:var(--ink-subtle);}
+
+/* Lightbox */
+.tr-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;}
+.tr-lightbox.open{display:flex;}
+.tr-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain;}
+.tr-lightbox-close{position:absolute;top:16px;right:20px;color:#fff;font-size:1.6rem;cursor:pointer;opacity:.7;background:none;border:none;line-height:1;}
+.tr-lightbox-close:hover{opacity:1;}
+
+.tr-embed-note{font-size:.75rem;color:var(--ink-subtle);margin-top:4px;font-style:italic;}
+/* Discord mention chips */
+.dc-mention{display:inline;padding:1px 4px;border-radius:3px;background:rgba(88,101,242,.18);color:#7289da;font-weight:500;font-size:.88em;}
+.dc-channel{background:rgba(88,101,242,.12);color:#5865f2;}
+.dc-role{background:rgba(255,165,0,.12);color:#e67e22;}
+.dc-emoji{font-size:.88em;color:var(--ink-muted);}
+.tr-meta-strip{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;font-size:.82rem;color:var(--ink-muted);}
+.tr-meta-strip strong{color:var(--ink);}
+.tr-back{display:inline-flex;align-items:center;gap:5px;font-size:.82rem;color:var(--accent);text-decoration:none;margin-bottom:18px;}
+.tr-back:hover{text-decoration:underline;}
+/* (portal link is in sidebar) */
+.tr-actions{display:flex;justify-content:flex-end;margin-bottom:12px;}
+.tr-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:.82rem;font-weight:500;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);text-decoration:none;cursor:pointer;transition:all .14s;}
+.tr-btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none;}
+
+/* Expiry notice */
+.tr-expiry-notice{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:.8rem;color:#92400e;margin-bottom:14px;}
+[data-theme="dark"] .tr-expiry-notice{background:#292217;border-color:#78350f;color:#fbbf24;}
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'disfunction:vc_transcript_list' %}" class="tr-back">← All Transcripts</a>
+
+<div class="an-page-header">
+  <h1>{{ transcript.channel_name }}</h1>
+  <div class="tr-meta-strip">
+    <span>Type: <strong>{{ transcript.channel_type }}</strong></span>
+    <span>Messages: <strong>{{ transcript.message_count }}</strong></span>
+    <span>Created: <strong>{{ transcript.vc_created_at|date:"Y-m-d H:i" }} UTC</strong></span>
+    <span>Deleted: <strong>{{ transcript.deleted_at|date:"Y-m-d H:i" }} UTC</strong></span>
+    {% if transcript.profile_slug %}<span>Profile: <strong>{{ transcript.profile_slug }}</strong></span>{% endif %}
+  </div>
+</div>
+
+<div class="tr-expiry-notice">
+  ⚠️ Images are served directly from Discord's CDN and are valid for ~24 hours after capture. Older transcripts may show expired image placeholders.
+</div>
+
+<div class="tr-actions">
+  <a href="?export=txt" class="tr-btn">↓ Export .txt</a>
+</div>
+
+<div class="an-card tr-chat">
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="tr-msg {% if msg.prev_author_id == msg.author_id %}tr-continuation{% else %}new-group{% endif %}"
+         id="msg-{{ msg.message_id }}">
+      {% if msg.author_avatar_url %}
+        <img class="tr-avatar" src="{{ msg.author_avatar_url }}" alt="" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="tr-avatar-placeholder" style="display:none;">{{ msg.author_name|slice:":1"|upper }}</div>
+      {% else %}
+        <div class="tr-avatar-placeholder">{{ msg.author_name|slice:":1"|upper }}</div>
+      {% endif %}
+      <div class="tr-msg-body">
+        <div class="tr-msg-meta">
+          <span class="tr-msg-author {% if msg.is_bot %}is-bot{% endif %}">
+            {{ msg.author_name }}{% if msg.is_bot %}<span class="tr-bot-tag">BOT</span>{% endif %}
+          </span>
+          <span class="tr-msg-time">{{ msg.created_at|date:"Y-m-d H:i:s" }} UTC</span>
+        </div>
+        {% if msg.clean_content %}
+          <div class="tr-msg-content">{{ msg.clean_content }}</div>
+        {% elif not msg.attachments and msg.embeds_count == 0 %}
+          <div class="tr-msg-content empty">[no text content]</div>
+        {% endif %}
+
+        {% if msg.attachments %}
+        <div class="tr-attachments">
+          {% for att in msg.attachments %}
+            {% if att.content_type and att.content_type|slice:":6" == "image/" %}
+              {# ── Inline image ── #}
+              <div class="tr-img-wrap">
+                <img class="tr-img"
+                     src="{{ att.url }}"
+                     alt="{{ att.filename }}"
+                     loading="lazy"
+                     data-full="{{ att.url }}"
+                     data-filename="{{ att.filename }}"
+                     onerror="this.style.display='none';this.nextElementSibling.classList.add('visible');">
+                <div class="tr-img-expired">
+                  🖼️ <span><strong>{{ att.filename }}</strong><br>Image expired (Discord CDN ~24h)</span>
+                  <a href="{{ att.url }}" target="_blank" rel="noopener" style="margin-left:auto;font-size:.75rem;color:var(--accent);">Try link →</a>
+                </div>
+                <div class="tr-img-name">{{ att.filename }}{% if att.width and att.height %} · {{ att.width }}×{{ att.height }}{% endif %}</div>
+              </div>
+            {% else %}
+              {# ── File download pill ── #}
+              <a class="tr-file" href="{{ att.url }}" target="_blank" rel="noopener">
+                <span class="tr-file-icon">
+                  {% if att.content_type and "video" in att.content_type %}🎬
+                  {% elif att.content_type and "audio" in att.content_type %}🎵
+                  {% elif att.content_type and "pdf" in att.content_type %}📄
+                  {% else %}📎{% endif %}
+                </span>
+                <span class="tr-file-info">
+                  <span class="tr-file-name">{{ att.filename }}</span>
+                  {% if att.size %}<span class="tr-file-size">{{ att.size|filesizeformat }}</span>{% endif %}
+                </span>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if msg.embeds_count %}
+          <div class="tr-embed-note">{{ msg.embeds_count }} embed{{ msg.embeds_count|pluralize }} (not preserved)</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="an-empty" style="padding:60px;">No messages were recorded in this voice channel.</div>
+  {% endif %}
+</div>
+
+{# Lightbox #}
+<div class="tr-lightbox" id="trLightbox">
+  <button class="tr-lightbox-close" onclick="document.getElementById('trLightbox').classList.remove('open')">✕</button>
+  <img id="trLightboxImg" src="" alt="">
+</div>
+
+<script>
+// Lightbox
+document.querySelectorAll('.tr-img').forEach(function(img){
+  img.addEventListener('click', function(){
+    document.getElementById('trLightboxImg').src = this.dataset.full;
+    document.getElementById('trLightbox').classList.add('open');
+  });
+});
+document.getElementById('trLightbox').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('open');
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape') document.getElementById('trLightbox').classList.remove('open');
+});
+
+{% if request.GET.export == "txt" %}
+(function(){
+  var lines = [
+    "VC Transcript: {{ transcript.channel_name|escapejs }}",
+    "Type: {{ transcript.channel_type }} | Profile: {{ transcript.profile_slug|default:'—'|escapejs }}",
+    "Created: {{ transcript.vc_created_at|date:'Y-m-d H:i' }} UTC | Deleted: {{ transcript.deleted_at|date:'Y-m-d H:i' }} UTC",
+    "Messages: {{ transcript.message_count }}",
+    "============================================================"
+  ];
+  {% for msg in messages %}
+  lines.push("[{{ msg.created_at|date:'Y-m-d H:i:s' }}] {{ msg.author_name|escapejs }}{% if msg.is_bot %} [BOT]{% endif %}: {{ msg.clean_content|striptags|escapejs }}{% for att in msg.attachments %} [{{ att.filename|escapejs }}: {{ att.url|escapejs }}]{% endfor %}");
+  {% endfor %}
+  var blob = new Blob([lines.join("\n")], {type:"text/plain"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "vc-transcript-{{ transcript.pk }}.txt";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+})();
+{% endif %}
+</script>
+{% endblock %}

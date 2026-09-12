@@ -1,0 +1,230 @@
+{% extends "analytics/base.html" %}
+{% block analytics_title %}Message Log{% endblock %}
+{% block nav_message_log %}active{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+/* Filters */
+.ml-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:flex-end;}
+.ml-field label{font-family:var(--font-display);font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);display:block;margin-bottom:4px;}
+.ml-filters select,.ml-filters input[type=text]{height:34px;padding:0 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--ink);font-size:.83rem;outline:none;transition:border .14s;}
+.ml-filters select:focus,.ml-filters input[type=text]:focus{border-color:var(--accent);}
+.ml-filters button{height:34px;padding:0 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:.83rem;font-weight:500;cursor:pointer;transition:background .14s;}
+.ml-filters button:hover{background:var(--accent-hover);}
+.ml-clear{height:34px;display:inline-flex;align-items:center;padding:0 12px;border-radius:6px;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);font-size:.82rem;text-decoration:none;transition:all .14s;}
+.ml-clear:hover{border-color:var(--danger);color:var(--danger);text-decoration:none;}
+
+/* Event badges */
+.ev-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:.72rem;font-weight:600;letter-spacing:.03em;white-space:nowrap;}
+.ev-edit{background:#fef3c7;color:#92400e;}
+.ev-delete{background:var(--danger-light);color:var(--danger);}
+.mod-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:.66rem;font-weight:500;margin-top:4px;}
+.mod-staff{background:var(--danger-light);color:var(--danger);}
+.mod-unknown{background:var(--border);color:var(--ink-muted);}
+
+/* Content diff — compact two-line layout */
+.ml-diff{display:flex;flex-direction:column;gap:3px;}
+.ml-diff-row{display:flex;align-items:flex-start;gap:8px;}
+.ml-diff-label{font-family:var(--font-display);font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;padding-top:5px;min-width:36px;}
+.ml-diff-label.before{color:var(--danger);}
+.ml-diff-label.after{color:var(--success);}
+.ml-diff-text{font-size:.84rem;line-height:1.45;color:var(--ink);white-space:pre-wrap;word-break:break-word;padding:4px 10px;border-radius:5px;flex:1;}
+.ml-diff-text.before{background:var(--danger-light);color:var(--ink-muted);text-decoration:line-through;text-decoration-color:#dc262670;}
+.ml-diff-text.after{background:var(--success-light);color:var(--ink);}
+.ml-diff-text.deleted{background:var(--danger-light);color:var(--ink);}
+.ml-diff-arrow{font-size:.8rem;color:var(--ink-subtle);padding-top:5px;flex-shrink:0;}
+
+/* Unchanged edit (embed pin etc) */
+.ml-content-plain{font-size:.84rem;color:var(--ink-muted);line-height:1.45;font-style:italic;}
+
+/* Attachments + executor note */
+.ml-attach{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.ml-attach-pill{display:inline-flex;align-items:center;gap:4px;font-size:.73rem;color:var(--ink-muted);background:var(--surface-raised);padding:2px 8px;border-radius:4px;}
+.ml-executor{font-size:.74rem;color:var(--ink-muted);margin-top:5px;}
+.ml-executor strong{color:var(--danger);}
+.ml-empty{color:var(--ink-subtle);font-style:italic;font-size:.84rem;}
+
+/* Table */
+.an-table td{vertical-align:top;padding:12px 14px;}
+.an-table td.td-event{vertical-align:top;white-space:nowrap;width:100px;}
+.an-table td.td-meta{vertical-align:top;width:160px;}
+.an-table td.td-when{vertical-align:top;width:130px;white-space:nowrap;}
+.td-author{font-weight:600;font-size:.875rem;color:var(--ink);}
+.td-channel{font-size:.78rem;color:var(--ink-muted);margin-top:2px;}
+.td-when-date{font-size:.82rem;color:var(--ink);}
+.td-when-time{font-size:.74rem;color:var(--ink-subtle);margin-top:1px;}
+
+/* Pagination */
+.ml-pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);font-size:.82rem;color:var(--ink-muted);}
+.ml-pages{display:flex;gap:4px;}
+.ml-page-link{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 6px;border-radius:6px;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);text-decoration:none;font-size:.78rem;transition:all .14s;}
+.ml-page-link:hover{border-color:var(--accent);color:var(--accent);text-decoration:none;}
+.ml-page-link.current{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.ml-page-link.disabled{opacity:.35;pointer-events:none;}
+{% endblock %}
+
+{% block content %}
+<div class="an-page-header">
+  <h1>Message Log</h1>
+  <p>Edited and deleted messages across all monitored channels.</p>
+</div>
+
+<form method="get" class="ml-filters">
+  <div class="ml-field">
+    <label>Event</label>
+    <select name="event" style="width:130px;">
+      <option value="">All Events</option>
+      <option value="CNG" {% if event_filter == 'CNG' %}selected{% endif %}>Edits only</option>
+      <option value="DEL" {% if event_filter == 'DEL' %}selected{% endif %}>Deletes only</option>
+    </select>
+  </div>
+  <div class="ml-field">
+    <label>Channel</label>
+    <select name="channel" style="width:200px;">
+      <option value="">All Channels</option>
+      {% for ch in channels %}
+      <option value="{{ ch.id }}" {% if channel_filter == ch.id|stringformat:"s" %}selected{% endif %}>#{{ ch.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="ml-field">
+    <label>Author</label>
+    <input type="text" name="author" value="{{ author_filter }}" placeholder="Display name…" style="width:150px;">
+  </div>
+  <div style="display:flex;gap:8px;align-items:flex-end;">
+    <button type="submit">Apply</button>
+    {% if event_filter or channel_filter or author_filter %}
+    <a href="{% url 'disfunction:message_log' %}" class="ml-clear">✕ Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="an-card">
+  <div class="an-card-header">
+    <h2>Events</h2>
+    <span class="an-count-badge">{{ page_obj.paginator.count }}</span>
+  </div>
+
+  {% if page_obj %}
+  <table class="an-table">
+    <thead>
+      <tr>
+        <th style="width:100px;">Event</th>
+        <th style="width:170px;">Author / Channel</th>
+        <th>Content</th>
+        <th style="width:120px;">When</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for msg in messages %}
+      <tr>
+        {# ── Event badge ── #}
+        <td class="td-event">
+          {% if msg.event == 'CNG' %}
+            <span class="ev-badge ev-edit">✏️ Edited</span>
+          {% else %}
+            <span class="ev-badge ev-delete">🗑 Deleted</span>
+            {% if msg.moderated == 'YES' %}
+              <div><span class="mod-badge mod-staff">Staff</span></div>
+            {% elif msg.moderated == 'UNK' %}
+              <div><span class="mod-badge mod-unknown">Unknown</span></div>
+            {% endif %}
+          {% endif %}
+        </td>
+
+        {# ── Author + Channel ── #}
+        <td class="td-meta">
+          <div class="td-author">{{ msg.author_name }}</div>
+          <div class="td-channel">
+            {% if msg.channel_cached %}#{{ msg.channel_cached.name }}{% else %}unknown channel{% endif %}
+          </div>
+        </td>
+
+        {# ── Content ── #}
+        <td>
+          {% if msg.event == 'CNG' %}
+            {% if msg.original_content and msg.original_content != msg.content %}
+              <div class="ml-diff">
+                <div class="ml-diff-row">
+                  <span class="ml-diff-label before">Was</span>
+                  <span class="ml-diff-text before">{{ msg.original_content|truncatechars:300 }}</span>
+                </div>
+                <div class="ml-diff-row">
+                  <span class="ml-diff-label after">Now</span>
+                  <span class="ml-diff-text after">{{ msg.content|truncatechars:300 }}</span>
+                </div>
+              </div>
+            {% elif msg.content %}
+              <span class="ml-content-plain">{{ msg.content|truncatechars:300 }}</span>
+            {% else %}
+              <span class="ml-empty">[no text content change recorded]</span>
+            {% endif %}
+          {% else %}
+            {# DELETE #}
+            {% if msg.content %}
+              <div class="ml-diff">
+                <div class="ml-diff-row">
+                  <span class="ml-diff-label before">Msg</span>
+                  <span class="ml-diff-text deleted">{{ msg.content|truncatechars:300 }}</span>
+                </div>
+              </div>
+            {% else %}
+              <span class="ml-empty">[no text — attachment only]</span>
+            {% endif %}
+            {% if msg.attachments %}
+              <div class="ml-attach">
+                {% for att in msg.attachments %}
+                <span class="ml-attach-pill">📎 attachment {{ forloop.counter }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% with exec=msg.safe_discord_executor %}
+              {% if exec %}
+              <div class="ml-executor">Deleted by: <strong>{{ exec }}</strong></div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        </td>
+
+        {# ── Timestamp ── #}
+        <td class="td-when">
+          <div class="td-when-date">{{ msg.updated_at|date:"Y-m-d" }}</div>
+          <div class="td-when-time">{{ msg.updated_at|date:"H:i:s" }} UTC</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# ── Pagination ── #}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="ml-pagination">
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="ml-pages">
+      {% if page_obj.has_previous %}
+      <a class="ml-page-link" href="?page={{ page_obj.previous_page_number }}&event={{ event_filter }}&channel={{ channel_filter }}&author={{ author_filter }}">‹ Prev</a>
+      {% else %}
+      <span class="ml-page-link disabled">‹ Prev</span>
+      {% endif %}
+
+      {% for p in page_obj.paginator.page_range %}
+        {% if p >= page_obj.number|add:"-3" and p <= page_obj.number|add:"3" %}
+        <a class="ml-page-link {% if p == page_obj.number %}current{% endif %}"
+           href="?page={{ p }}&event={{ event_filter }}&channel={{ channel_filter }}&author={{ author_filter }}">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a class="ml-page-link" href="?page={{ page_obj.next_page_number }}&event={{ event_filter }}&channel={{ channel_filter }}&author={{ author_filter }}">Next ›</a>
+      {% else %}
+      <span class="ml-page-link disabled">Next ›</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="an-empty">No events match the current filters.</div>
+  {% endif %}
+</div>
+{% endblock %}

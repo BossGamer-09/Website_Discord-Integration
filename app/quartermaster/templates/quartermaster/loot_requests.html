@@ -1,0 +1,74 @@
+{% extends "quartermaster/_base.html" %}
+{% block title %}Loot Requests{% endblock %}
+{% block wm_page %}Loot — Requests{% endblock %}
+{% block subtitle %}Pending loot submissions from org members{% endblock %}
+
+{% block content %}
+<style>
+.req-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+.req-filters a{font-size:0.78rem;padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--ink-muted);text-decoration:none;transition:all 0.15s;}
+.req-filters a:hover,.req-filters a.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.req-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.req-back{margin-bottom:16px;}
+.req-back a{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;}
+.req-back a:hover{background:var(--accent-light);}
+.badge-pending{background:#fef9c3;color:#854d0e;}[data-theme="dark"] .badge-pending{background:#1c1404;color:#fbbf24;}
+.badge-approved{background:#dcfce7;color:#15803d;}[data-theme="dark"] .badge-approved{background:#052e16;color:#4ade80;}
+.badge-denied{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .badge-denied{background:#1f0a0a;color:#f87171;}
+.badge-input{background:#dbeafe;color:#1e40af;}[data-theme="dark"] .badge-input{background:#0f1e3a;color:#60a5fa;}
+.badge-withdraw{background:#fef3c7;color:#92400e;}[data-theme="dark"] .badge-withdraw{background:#1c1204;color:#fbbf24;}
+.loc-chip{font-family:'Space Mono',monospace;font-size:0.68rem;padding:2px 7px;border-radius:8px;background:var(--accent-light);color:var(--accent);}
+[data-theme="dark"] .loc-chip{background:#1a2540;color:#60a5fa;}
+</style>
+
+<div class="req-back">
+  <a href="{% url 'quartermaster:overview' %}">← Back to Overview</a>
+</div>
+
+<div class="req-filters">
+  <a href="?status=" {% if not status_filter %}class="active"{% endif %}>All</a>
+  {% for val, label in Status.choices %}
+    <a href="?status={{ val }}" {% if status_filter == val %}class="active"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+
+{% if requests %}
+<div class="req-card">
+  <div class="sp-hdr" style="display:grid;grid-template-columns:1.5fr 1fr 90px 90px 90px 80px;gap:12px;padding:8px 16px;font-size:0.68rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle);border-bottom:1px solid var(--border);">
+    <div>Item</div><div>Requester</div><div>Direction</div><div>Qty</div><div>Location</div><div>Status</div>
+  </div>
+  {% for r in requests %}
+  <div style="display:grid;grid-template-columns:1.5fr 1fr 90px 90px 90px 80px;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;font-size:0.85rem;">
+    <div style="font-weight:600;">{{ r.item.name }}</div>
+    <div style="color:var(--ink-muted);">{{ r.requester.display_name|default:r.requester }}</div>
+    <div>
+      {% if r.direction == Direction.INPUT %}
+        <span class="badge badge-input">📥 Deposit</span>
+      {% else %}
+        <span class="badge badge-withdraw">📤 Withdraw</span>
+      {% endif %}
+    </div>
+    <div style="font-family:'Space Mono',monospace;">{{ r.quantity }}</div>
+    <div>
+      {% if r.item.location_agnostic %}
+        <span style="color:var(--ink-subtle);font-size:0.8rem;">Universal</span>
+      {% elif r.location %}
+        <span class="loc-chip">{{ r.location_display }}</span>
+      {% else %}
+        <span style="color:var(--ink-subtle);">—</span>
+      {% endif %}
+    </div>
+    <div>
+      <span class="badge badge-{{ r.status|lower }}">{{ r.get_status_display }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<p style="font-size:0.78rem;color:var(--ink-subtle);margin-top:8px;">Showing {{ requests|length }} request{{ requests|length|pluralize }}{% if status_filter %} filtered by {{ status_filter|lower }}{% endif %}</p>
+{% else %}
+<div class="qm-empty" style="padding:32px 20px;text-align:center;color:var(--ink-subtle);font-size:0.88rem;background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);">
+  <strong style="display:block;font-size:1.1rem;margin-bottom:6px;color:var(--ink-muted);">No requests found</strong>
+  {% if status_filter %}Try clearing the filter above.{% else %}No loot requests have been submitted yet.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

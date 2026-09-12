@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Not Found – BlightVeil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#7c3aed;--radius:14px;}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#a78bfa;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.box{max-width:420px;width:100%;padding:48px 32px;text-align:center;}
+.code{font-family:'Syne',sans-serif;font-weight:800;font-size:5rem;line-height:1;color:var(--accent);margin:0 0 8px;}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin:0 0 12px;}
+p{color:var(--ink-muted);font-size:0.9rem;margin:0 0 28px;line-height:1.6;}
+a{display:inline-block;padding:9px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="code">404</div>
+    <h1>Oops — not sure how you ended up here.</h1>
+    <p>This page doesn't exist, was moved, or you may not have permission to view it. Either way, we've got nothing for you at this URL.</p>
+    <a href="/">← Back to Portal</a>
+  </div>
+</body>
+</html>

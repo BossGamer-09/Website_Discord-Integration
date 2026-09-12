@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permission Denied – BlightVeil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#ff3b3b;--radius:14px;}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#ff3b3b;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.box{max-width:460px;width:100%;padding:48px 32px;text-align:center;}
+.code{font-family:'Syne',sans-serif;font-weight:800;font-size:5rem;line-height:1;color:var(--accent);margin:0 0 8px;text-shadow:0 0 24px rgba(255,59,59,0.35);}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin:0 0 12px;}
+p{color:var(--ink-muted);font-size:0.9rem;margin:0 0 28px;line-height:1.6;}
+a{display:inline-block;padding:9px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:500;}
+a.ghost{background:transparent;color:var(--ink-muted);border:1px solid var(--border);margin-left:8px;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="code">403</div>
+    <h1>Access Denied</h1>
+    <p>You don't have permission to view this page. If you think this is a mistake, ask a staff member to grant the appropriate Django permission.</p>
+    <a href="/">← Back to Portal</a>
+    <a class="ghost" href="javascript:history.back()">Go back</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Byte-compiled
+__pycache__/
+*.py[codz]
+*$py.class
+
+
+# env
+*.env
+*.sqlite3
+*venv/
+
+# VSCode Dev Container
+.devcontainer/
+Dockerfile
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs / media / static
+*.log
+media/
+staticfiles/
+
+# Backup archive duplicated by app/inventory/ source dir
+app/inventory.zip

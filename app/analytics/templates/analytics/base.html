@@ -1,0 +1,139 @@
+{% extends "bv_base.html" %}
+{% load static %}
+
+{% block title %}{% block analytics_title %}Analytics{% endblock %} – BlightVeil{% endblock %}
+
+{% block theme_toggle %}{% endblock %}{# analytics has its own in the topbar #}
+
+{% block shell_class %}bv-shell-wide{% endblock %}
+
+{% block extra_css %}
+/* ── Analytics shell: sidebar + main ── */
+.an-shell{display:flex;min-height:100vh;}
+.an-sidebar{width:210px;flex-shrink:0;background:var(--card-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;transition:background-color .22s,border-color .22s;}
+.an-sidebar-logo{padding:0 18px 20px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.an-sidebar-wm{font-family:var(--font-display);font-weight:800;font-size:.98rem;color:var(--ink);}
+.an-sidebar-sub{font-size:.68rem;color:var(--ink-subtle);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+.an-nav-label{padding:6px 18px 4px;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-subtle);font-family:var(--font-display);}
+.an-nav-label-bottom{margin-top:auto;}
+.an-nav-link{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:.86rem;color:var(--ink-muted);border-left:3px solid transparent;transition:all .14s;text-decoration:none;}
+.an-nav-link:hover{background:var(--accent-light);color:var(--ink);border-left-color:var(--accent);text-decoration:none;}
+.an-nav-link.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+.an-nav-icon{width:15px;text-align:center;flex-shrink:0;}
+.an-main{flex:1;overflow:auto;padding:36px 32px 80px;}
+
+/* Theme toggle inside topbar area */
+.an-theme-toggle{position:fixed;top:14px;right:16px;z-index:1000;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .18s;padding:0;}
+.an-theme-toggle:hover{border-color:var(--accent);color:var(--ink);}
+.an-theme-toggle .icon-sun{display:none;}
+.an-theme-toggle .icon-moon{display:block;}
+[data-theme="dark"] .an-theme-toggle .icon-sun{display:block;}
+[data-theme="dark"] .an-theme-toggle .icon-moon{display:none;}
+
+/* Page header */
+.an-page-header{margin-bottom:28px;}
+.an-page-header h1{font-family:var(--font-display);font-weight:800;font-size:1.55rem;letter-spacing:-.03em;margin:0 0 4px;}
+.an-page-header p{color:var(--ink-muted);font-size:.9rem;margin:0;}
+.an-period-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--accent-light);color:var(--accent);border-radius:20px;font-size:.74rem;font-weight:500;margin-top:8px;}
+
+/* Stat grid */
+.an-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+.an-stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);animation:bv-fade-up .3s ease both;}
+.an-stat-label{font-family:var(--font-display);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;}
+.an-stat-value{font-family:var(--font-mono);font-size:1.8rem;font-weight:700;line-height:1;color:var(--ink);}
+.an-stat-value.green{color:var(--success);}
+.an-stat-value.red{color:var(--danger);}
+.an-stat-value.amber{color:var(--warning);}
+.an-stat-value.accent{color:var(--accent);}
+.an-stat-sub{font-size:.73rem;color:var(--ink-subtle);margin-top:4px;}
+
+/* Section cards */
+.an-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;animation:bv-fade-up .3s ease both;}
+.an-card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.an-card-header h2{font-family:var(--font-display);font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);margin:0;flex:1;}
+.an-count-badge{font-family:var(--font-mono);font-size:.73rem;padding:2px 8px;background:var(--accent-light);color:var(--accent);border-radius:10px;}
+
+/* Tables */
+.an-table{width:100%;border-collapse:collapse;}
+.an-table th{font-family:var(--font-display);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.an-table td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:.875rem;}
+.an-table tr:last-child td{border-bottom:none;}
+.an-table tr:hover td{background:var(--accent-light);}
+.rank-col{width:38px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-subtle);text-align:center;}
+
+/* Bar */
+.an-bar-wrap{display:flex;align-items:center;gap:10px;}
+.an-bar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;min-width:50px;}
+.an-bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s ease;}
+.an-bar-fill.green{background:var(--success);}
+.an-bar-fill.amber{background:var(--warning);}
+.an-bar-fill.red{background:var(--danger);}
+.an-bar-val{font-family:var(--font-mono);font-size:.73rem;color:var(--ink-muted);min-width:34px;text-align:right;}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:.71rem;font-weight:500;}
+.pill-green{background:var(--success-light);color:var(--success);}
+.pill-amber{background:var(--warning-light);color:var(--warning);}
+.pill-red{background:var(--danger-light);color:var(--danger);}
+.pill-blue{background:var(--accent-light);color:var(--accent);}
+.pill-gray{background:var(--border);color:var(--ink-muted);}
+
+/* Two-col */
+.an-two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+/* Empty */
+.an-empty{padding:40px;text-align:center;color:var(--ink-subtle);font-size:.9rem;}
+
+@media(max-width:900px){.an-two-col{grid-template-columns:1fr;}.an-sidebar{display:none;}.an-main{padding:20px 16px 60px;}}
+{% endblock %}
+
+{% block body %}
+<button class="an-theme-toggle" id="bvThemeToggle" aria-label="Toggle theme" type="button">
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<div class="an-shell">
+  <nav class="an-sidebar">
+    <div class="an-sidebar-logo">
+      <div class="an-sidebar-wm">BlightVeil</div>
+      <div class="an-sidebar-sub">Analytics</div>
+    </div>
+    <a href="/" class="an-nav-link" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:4px;color:var(--ink-muted);"><span class="an-nav-icon">←</span> Back to Portal</a>
+    <span class="an-nav-label">Dashboards</span>
+    <a href="{% url 'analytics:overview' %}" class="an-nav-link {% block nav_overview %}{% endblock %}">
+      <span class="an-nav-icon">📊</span> Org Overview
+    </a>
+    <a href="{% url 'analytics:member_activity' %}" class="an-nav-link {% block nav_members %}{% endblock %}">
+      <span class="an-nav-icon">👥</span> Member Activity
+    </a>
+    <a href="{% url 'analytics:event_health' %}" class="an-nav-link {% block nav_events %}{% endblock %}">
+      <span class="an-nav-icon">📅</span> Event Health
+    </a>
+    <a href="{% url 'analytics:kill_stats' %}" class="an-nav-link {% block nav_kills %}{% endblock %}">
+      <span class="an-nav-icon">⚔️</span> Kill Stats
+    </a>
+    <a href="{% url 'analytics:leadership_activity' %}" class="an-nav-link {% block nav_leadership %}{% endblock %}">
+      <span class="an-nav-icon">🎖️</span> Leadership
+    </a>
+    <a href="{% url 'analytics:performance_scores' %}" class="an-nav-link {% block nav_performance %}{% endblock %}">
+      <span class="an-nav-icon">🏆</span> Performance
+    </a>
+    <span class="an-nav-label">Logs</span>
+    <a href="{% url 'disfunction:message_log' %}" class="an-nav-link {% block nav_message_log %}{% endblock %}">
+      <span class="an-nav-icon">🗒️</span> Message Log
+    </a>
+    <a href="{% url 'disfunction:vc_transcript_list' %}" class="an-nav-link {% block nav_vc_transcripts %}{% endblock %}">
+      <span class="an-nav-icon">🎙</span> VC Transcripts
+    </a>
+    <span class="an-nav-label">Other</span>
+    <a href="/infantry/" class="an-nav-link"><span class="an-nav-icon">🎯</span> Infantry Roster</a>
+    <a href="/events/" class="an-nav-link"><span class="an-nav-icon">🗓️</span> Events</a>
+    <a href="/pilots/" class="an-nav-link"><span class="an-nav-icon">✈️</span> Pilots</a>
+  </nav>
+
+  <main class="an-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

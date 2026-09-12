@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}History · {{ post.title }} · Knowledge Base{% endblock %}
+
+{% block content %}
+<style>
+  .kb-shell { max-width:720px; margin:0 auto; padding:40px 20px 100px; }
+  .kb-card  { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .kb-header { padding:18px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .kb-header-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--ink); }
+  .hist-table { width:100%; border-collapse:collapse; }
+  .hist-table th { font-size:.75rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-subtle); padding:10px 22px; border-bottom:1px solid var(--border); text-align:left; }
+  .hist-table td { padding:11px 22px; border-bottom:1px solid var(--border); font-size:.88rem; color:var(--ink); vertical-align:top; }
+  .hist-table tr:last-child td { border-bottom:none; }
+  .hist-table tr:hover td { background:var(--surface); }
+  .hist-type { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; }
+  .hist-type-create { background:#dcfce7; color:#15803d; }
+  .hist-type-update { background:#dbeafe; color:#1d4ed8; }
+  .hist-type-delete { background:#fee2e2; color:#b91c1c; }
+  .hist-user { color:var(--ink-muted); font-size:.82rem; }
+  .hist-date { color:var(--ink-subtle); font-size:.82rem; white-space:nowrap; }
+  .hist-ver  { font-family:monospace; color:var(--ink-subtle); font-size:.8rem; }
+</style>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="kb-shell">
+  <a href="/" class="page-wordmark" style="margin-bottom:6px;">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Knowledge Base</span>
+  </a>
+
+  <div class="breadcrumb" style="margin-bottom:20px;">
+    <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'discordwebcms:post_edit' post.pk %}">{{ post.title }}</a><span class="breadcrumb-sep">›</span>
+    <span>History</span>
+  </div>
+
+  <div class="kb-card">
+    <div class="kb-header">
+      <div class="kb-header-title">Version History: {{ post.title }}</div>
+      <span style="font-size:.8rem;color:var(--ink-subtle);">v{{ post.version }} current</span>
+    </div>
+
+    {% if historical %}
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Change</th>
+          <th>By</th>
+          <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in historical %}
+        <tr>
+          <td class="hist-date">{{ h.history_date|date:"Y-m-d H:i" }}</td>
+          <td>
+            {% if h.history_type == '+' %}
+              <span class="hist-type hist-type-create">Created</span>
+            {% elif h.history_type == '~' %}
+              <span class="hist-type hist-type-update">Updated</span>
+              {% if h.prev_record %}
+                {% with delta=h.diff_against(h.prev_record) %}
+                  {% for change in delta.changes %}
+                    <div style="font-size:.78rem;color:var(--ink-muted);margin-top:3px;">
+                      <strong>{{ change.field }}</strong>:
+                      <span style="text-decoration:line-through;color:var(--danger-muted);">{{ change.old|truncatechars:60 }}</span>
+                      → <span>{{ change.new|truncatechars:60 }}</span>
+                    </div>
+                  {% endfor %}
+                {% endwith %}
+              {% endif %}
+            {% elif h.history_type == '-' %}
+              <span class="hist-type hist-type-delete">Deleted</span>
+            {% endif %}
+          </td>
+          <td class="hist-user">{{ h.history_user|default:"—" }}</td>
+          <td class="hist-ver">v{{ h.version }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:24px 22px;color:var(--ink-subtle);font-size:.88rem;">No history recorded yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+});
+</script>
+{% endblock %}

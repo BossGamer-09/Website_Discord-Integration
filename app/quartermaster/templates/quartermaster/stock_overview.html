@@ -1,0 +1,98 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory – Blightveil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;--red:#dc2626;--amber:#f59e0b;--green:#16a34a;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.shell{max-width:960px;margin:0 auto;padding:48px 24px 80px;}
+.portal-back{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:inline-block;margin-bottom:20px;transition:all 0.15s;}
+.portal-back:hover{background:var(--accent-light);}
+.wordmark{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--ink);}
+.wm-sep{color:var(--ink-subtle);font-size:1rem;}
+.wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;color:var(--accent);}
+.subtitle{color:var(--ink-muted);font-size:0.88rem;margin-bottom:36px;}
+.nav-links{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;}
+.nav-links a{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;}
+.nav-links a:hover{background:var(--accent-light);border-color:var(--accent);}
+.flash-msg{font-size:0.82rem;color:var(--red);}
+.cat-heading{font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-subtle);margin:28px 0 10px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.item-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;text-decoration:none;color:var(--ink);display:block;transition:all 0.15s;}
+.item-card:hover{border-color:var(--accent);box-shadow:0 4px 24px rgba(37,99,235,0.12);}
+.item-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:4px;}
+.item-desc{color:var(--ink-muted);font-size:0.8rem;margin-bottom:14px;line-height:1.4;}
+.badges{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{font-family:'Space Mono',monospace;font-size:0.72rem;padding:3px 10px;border-radius:20px;font-weight:700;}
+.badge-avail{background:#dcfce7;color:#15803d;}
+[data-theme="dark"] .badge-avail{background:#052e16;color:#4ade80;}
+.badge-assigned{background:#fef9c3;color:#854d0e;}
+[data-theme="dark"] .badge-assigned{background:#1c1404;color:#fbbf24;}
+.badge-low{background:#fee2e2;color:#b91c1c;}
+[data-theme="dark"] .badge-low{background:#1f0a0a;color:#f87171;}
+.empty{color:var(--ink-muted);font-size:0.88rem;padding:32px 0;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" type="button" aria-label="Toggle dark mode" onclick="(function(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('theme',t);})()">
+  <svg class="icon-sun" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm0-14V2m0 20v-2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12H4m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+  <svg class="icon-moon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<div class="shell">
+  <a href="/user/index/" class="portal-back">← Back to Portal</a>
+
+  <div class="wordmark">
+    <span class="wm-name">BlightVeil</span>
+    <span class="wm-sep">/</span>
+    <span class="wm-page">Inventory</span>
+  </div>
+  <div class="subtitle">Quartermaster stock overview</div>
+
+  <div class="nav-links">
+    <a href="{% url 'quartermaster:log' %}">📋 Assignment Log</a>
+    {% if messages %}{% for m in messages %}<span class="flash-msg">{{ m }}</span>{% endfor %}{% endif %}
+  </div>
+
+  {% if items %}
+    {% regroup items by category as cat_list %}
+    {% for cat in cat_list %}
+      <div class="cat-heading">{{ cat.grouper|default:"Uncategorised" }}</div>
+      <div class="grid">
+        {% for item in cat.list %}
+          <a class="item-card" href="{% url 'quartermaster:item_detail' item.slug %}">
+            <div class="item-name">{{ item.name }}</div>
+            {% if item.description %}<div class="item-desc">{{ item.description|truncatechars:80 }}</div>{% endif %}
+            <div class="badges">
+              {% if item.available == 0 and item.total_count > 0 %}
+                <span class="badge badge-low">0 available</span>
+              {% elif item.available <= item.low_stock_threshold %}
+                <span class="badge badge-low">⚠ {{ item.available }} left</span>
+              {% else %}
+                <span class="badge badge-avail">{{ item.available }} available</span>
+              {% endif %}
+              {% if item.assigned %}<span class="badge badge-assigned">{{ item.assigned }} out</span>{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">No stock items found.</p>
+  {% endif %}
+</div>
+</body>
+</html>

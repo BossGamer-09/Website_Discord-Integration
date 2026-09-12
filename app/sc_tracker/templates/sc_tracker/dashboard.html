@@ -1,0 +1,1010 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<!-- Apply saved theme before paint -->
+<script>
+(function() {
+  var t = localStorage.getItem('theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --void: #040608;
+  --deep: #07090e;
+  --hull: #0d1018;
+  --panel: #111520;
+  --console: #161b28;
+  --border-dim: rgba(80,160,255,0.12);
+  --border-active: rgba(80,160,255,0.35);
+  --cyan: #4af2ff;
+  --blue: #3d8eff;
+  --blue-dim: rgba(61,142,255,0.15);
+  --green: #39ff7e;
+  --green-dim: rgba(57,255,126,0.12);
+  --red: #ff3b3b;
+  --red-dim: rgba(255,59,59,0.12);
+  --amber: #ffb830;
+  --amber-dim: rgba(255,184,48,0.12);
+  --text: #c8d8f0;
+  --text-dim: #5a7090;
+  --text-bright: #e8f4ff;
+  --mono: 'Share Tech Mono', monospace;
+  --hud: 'Rajdhani', sans-serif;
+  --body: 'Exo 2', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.sc-page {
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Starfield */
+.sc-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 30% 10%, rgba(180,210,255,0.7) 0%, transparent 100%),
+    radial-gradient(2px 2px at 70% 90%, rgba(180,210,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 50%, rgba(255,255,255,0.8) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Grid overlay */
+.sc-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61,142,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,142,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sc-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ── HEADER ── */
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 28px;
+  border-bottom: 1px solid var(--border-dim);
+  margin-bottom: 28px;
+}
+
+.sc-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sc-logo-icon { width: 48px; height: 48px; }
+.sc-logo-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+.sc-logo-text .main-sep { opacity: 0.45; }
+.sc-btn-portal { text-decoration: none; margin-right: 4px; }
+
+.sc-logo-text .main {
+  font-family: var(--hud);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.sc-logo-text .sub {
+  font-family: var(--hud);
+  font-size: 0.72rem;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.sc-header-right { display: flex; align-items: center; gap: 20px; }
+
+.sc-clock { font-family: var(--mono); font-size: 0.85rem; color: var(--text-dim); text-align: right; }
+.sc-clock .utc { color: var(--cyan); font-size: 1.05rem; letter-spacing: 0.05em; }
+.sc-clock .uee { color: var(--amber); font-size: 0.78rem; letter-spacing: 0.04em; margin-top: 2px; }
+
+.sc-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: sc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sc-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+  50% { opacity: 0.5; box-shadow: 0 0 3px var(--green); }
+}
+
+/* ── GRID ── */
+.sc-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.sc-full { grid-column: 1 / -1; }
+
+/* ── PANEL ── */
+.sc-panel {
+  background: var(--panel);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.sc-panel:hover { border-color: var(--border-active); }
+.sc-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue), transparent);
+  opacity: 0.5;
+}
+
+.sc-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border-dim);
+  background: linear-gradient(180deg, var(--console) 0%, transparent 100%);
+}
+
+.sc-panel-title {
+  font-family: var(--hud);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-badge {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.sc-badge-live  { border-color: var(--green); color: var(--green); animation: sc-blink 2s ease-in-out infinite; }
+.sc-badge-sync  { border-color: var(--blue);  color: var(--blue); }
+.sc-badge-warn  { border-color: var(--amber); color: var(--amber); }
+.sc-badge-error { border-color: var(--red);   color: var(--red); }
+@keyframes sc-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.sc-panel-body { padding: 16px 18px; }
+
+/* ── SERVICE STATUS ── */
+.sc-service-grid { display: flex; flex-direction: column; gap: 8px; }
+
+.sc-service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--hull);
+  border: 1px solid var(--border-dim);
+  border-radius: 3px;
+  transition: all 0.3s;
+}
+.sc-service-row:hover { border-color: var(--border-active); background: var(--console); }
+
+.sc-service-name {
+  font-family: var(--hud);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--text-bright);
+}
+
+.sc-service-status { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.72rem; }
+
+.sc-ind { width: 8px; height: 8px; border-radius: 50%; }
+.sc-ind-operational { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sc-ind-degraded    { background: #a855f7;       box-shadow: 0 0 6px #a855f7; }
+.sc-ind-maintenance { background: var(--amber);  box-shadow: 0 0 6px var(--amber); }
+.sc-ind-partial     { background: var(--amber);  box-shadow: 0 0 6px var(--amber); }
+.sc-ind-major       { background: var(--red);    box-shadow: 0 0 6px var(--red); animation: sc-pulse 1s ease-in-out infinite; }
+.sc-ind-issues      { background: #eab308;       box-shadow: 0 0 6px #eab308; }
+.sc-ind-unknown     { background: var(--text-dim); }
+
+.sc-lbl-operational { color: var(--green); }
+.sc-lbl-degraded    { color: #a855f7; }
+.sc-lbl-maintenance { color: var(--amber); }
+.sc-lbl-partial     { color: var(--amber); }
+.sc-lbl-major       { color: var(--red); }
+.sc-lbl-issues      { color: #eab308; }
+.sc-lbl-unknown     { color: var(--text-dim); }
+
+/* ── INCIDENTS ── */
+.sc-incident-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 340px; overflow-y: auto;
+}
+.sc-incident-list::-webkit-scrollbar { width: 4px; }
+.sc-incident-list::-webkit-scrollbar-track { background: var(--hull); }
+.sc-incident-list::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
+
+.sc-inc {
+  background: var(--hull);
+  border: 1px solid var(--border-dim);
+  border-left: 3px solid;
+  border-radius: 3px;
+  padding: 12px 14px;
+  transition: all 0.2s;
+}
+.sc-inc:hover { border-color: var(--border-active); border-left-color: inherit; }
+.sc-inc-major    { border-left-color: var(--red);  background: linear-gradient(135deg, rgba(255,59,59,0.05), var(--hull)); }
+.sc-inc-degraded { border-left-color: #a855f7;      background: linear-gradient(135deg, rgba(168,85,247,0.05), var(--hull)); }
+.sc-inc-partial  { border-left-color: var(--amber); background: linear-gradient(135deg, rgba(255,184,48,0.05), var(--hull)); }
+.sc-inc-resolved { border-left-color: var(--green); background: linear-gradient(135deg, rgba(57,255,126,0.05), var(--hull)); }
+
+.sc-inc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.sc-inc-title { font-family: var(--hud); font-size: 0.88rem; font-weight: 600; color: var(--text-bright); line-height: 1.3; flex: 1; }
+
+.sc-sev {
+  font-family: var(--mono); font-size: 0.6rem;
+  padding: 2px 6px; border-radius: 2px;
+  text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+}
+.sc-sev-major    { background: var(--red-dim);  color: var(--red);  border: 1px solid rgba(255,59,59,0.3); }
+.sc-sev-degraded { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
+.sc-sev-partial  { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,184,48,0.3); }
+.sc-sev-resolved { background: var(--green-dim); color: var(--green); border: 1px solid rgba(57,255,126,0.3); }
+
+.sc-inc-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); display: flex; gap: 14px; flex-wrap: wrap; }
+
+.sc-empty { text-align: center; padding: 40px 20px; font-family: var(--mono); font-size: 0.82rem; color: var(--text-dim); }
+.sc-empty .icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+
+/* ── HANGAR ── */
+.sc-hangar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.sc-phase {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 28px 20px; border: 1px solid var(--border-dim); border-radius: 3px;
+  background: var(--hull); text-align: center; position: relative; overflow: hidden;
+}
+.sc-phase::before {
+  content: ''; position: absolute; inset: 0;
+  transition: opacity 0.5s; pointer-events: none;
+}
+.sc-phase.phase-green::before { background: radial-gradient(circle at center, var(--green), transparent 70%); opacity: 0.07; }
+.sc-phase.phase-red::before   { background: radial-gradient(circle at center, var(--red),   transparent 70%); opacity: 0.07; }
+
+.sc-phase-lbl  { font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim); margin-bottom: 8px; }
+.sc-phase-name { font-family: var(--hud); font-size: 2.4rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; margin-bottom: 6px; transition: color 0.5s, text-shadow 0.5s; }
+.phase-green .sc-phase-name { color: var(--green); text-shadow: 0 0 20px rgba(57,255,126,0.4); }
+.phase-red   .sc-phase-name { color: var(--red);   text-shadow: 0 0 20px rgba(255,59,59,0.4); }
+.sc-phase-sub  { font-family: var(--body); font-size: 0.78rem; color: var(--text-dim); margin-bottom: 16px; }
+
+.sc-timer-block { background: var(--deep); border: 1px solid var(--border-dim); border-radius: 3px; padding: 12px 24px; margin-top: 6px; }
+.sc-timer-val   { font-family: var(--mono); font-size: 1.8rem; letter-spacing: 0.05em; transition: color 0.5s; }
+.phase-green .sc-timer-val { color: var(--green); }
+.phase-red   .sc-timer-val { color: var(--red); }
+.sc-timer-lbl { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.15em; margin-top: 2px; }
+
+.sc-next-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--hull); border: 1px solid var(--border-dim);
+  border-radius: 3px; margin-top: 12px;
+}
+.sc-next-lbl { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+.sc-next-val { font-family: var(--mono); font-size: 0.88rem; color: var(--cyan); }
+
+.sc-advisory { margin-top: 16px; padding: 14px 16px; border-radius: 3px; border: 1px solid; display: flex; align-items: flex-start; gap: 12px; }
+.sc-advisory-green { background: var(--green-dim); border-color: rgba(57,255,126,0.25); }
+.sc-advisory-red   { background: var(--red-dim);   border-color: rgba(255,59,59,0.25); }
+.sc-advisory-icon  { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+.sc-advisory-text  { font-family: var(--hud); font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+.sc-advisory-green .sc-advisory-text { color: var(--green); }
+.sc-advisory-red   .sc-advisory-text { color: var(--red); }
+.sc-advisory-sub   { font-family: var(--body); font-size: 0.75rem; color: var(--text-dim); margin-top: 3px; }
+
+.sc-patch-tag { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); padding: 4px 10px; border: 1px solid var(--border-dim); border-radius: 2px; margin-top: 12px; display: inline-block; }
+
+/* ── LIGHTS ── */
+.sc-lights-panel { display: flex; flex-direction: column; justify-content: center; padding: 20px; border: 1px solid var(--border-dim); border-radius: 3px; background: var(--hull); }
+.sc-lights-hdr   { font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-dim); margin-bottom: 20px; text-align: center; }
+
+.sc-lights-row { display: flex; justify-content: center; gap: 14px; margin-bottom: 20px; }
+
+.sc-orb { width: 38px; height: 38px; border-radius: 50%; border: 2px solid; transition: all 0.6s ease; position: relative; }
+.sc-orb::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; transition: all 0.6s ease; }
+.sc-orb-lit     { border-color: var(--green); background: rgba(57,255,126,0.15); box-shadow: 0 0 16px rgba(57,255,126,0.5), inset 0 0 10px rgba(57,255,126,0.2); }
+.sc-orb-lit::after { background: radial-gradient(circle, rgba(57,255,126,0.8), rgba(57,255,126,0.2)); box-shadow: 0 0 8px rgba(57,255,126,0.8); }
+.sc-orb-red     { border-color: rgba(255,59,59,0.3); background: rgba(255,59,59,0.08); }
+.sc-orb-dark    { border-color: rgba(80,160,255,0.15); background: var(--deep); }
+
+.sc-lights-desc { font-family: var(--body); font-size: 0.78rem; color: var(--text-dim); text-align: center; line-height: 1.5; }
+
+/* ── CYCLE BAR ── */
+.sc-cycle { margin-top: 24px; }
+.sc-cycle-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+.sc-cycle-bar { height: 6px; background: var(--hull); border: 1px solid var(--border-dim); border-radius: 3px; overflow: hidden; }
+.sc-cycle-fill { height: 100%; border-radius: 3px; transition: width 1s linear; }
+.sc-cycle-green { background: linear-gradient(90deg, rgba(57,255,126,0.4), var(--green)); box-shadow: 0 0 10px rgba(57,255,126,0.3); }
+.sc-cycle-red   { background: linear-gradient(90deg, rgba(255,59,59,0.4), var(--red));   box-shadow: 0 0 10px rgba(255,59,59,0.3); }
+
+/* ── TIMING BOXES ── */
+.sc-timing { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-dim); }
+.sc-timing-box { background: var(--deep); padding: 8px; border: 1px solid var(--border-dim); border-radius: 2px; text-align: center; }
+.sc-timing-lbl { font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); }
+.sc-timing-val { font-family: var(--hud); font-size: 1rem; font-weight: 700; }
+.sc-timing-green { color: var(--green); }
+.sc-timing-red   { color: var(--red); }
+
+/* ── FOOTER ROW ── */
+.sc-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; border-top: 1px solid var(--border-dim); background: var(--hull);
+}
+.sc-foot-text { font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); }
+.sc-foot-text span { color: var(--blue); }
+
+.sc-btn {
+  font-family: var(--mono); font-size: 0.65rem; padding: 4px 10px;
+  border: 1px solid var(--border-active); border-radius: 2px;
+  background: var(--blue-dim); color: var(--blue); cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.15s;
+  text-decoration: none; display: inline-block;
+}
+.sc-btn:hover { background: rgba(61,142,255,0.25); color: var(--text-bright); }
+
+/* ── SHIMMER ── */
+.sc-shimmer { background: linear-gradient(90deg, var(--hull), var(--console), var(--hull)); background-size: 200% 100%; animation: sc-shimmer 1.5s infinite; border-radius: 3px; margin: 8px 0; }
+@keyframes sc-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.sc-shimmer-sm  { height: 42px; }
+.sc-shimmer-sm2 { height: 42px; opacity: 0.7; }
+.sc-shimmer-sm3 { height: 42px; opacity: 0.4; }
+.sc-shimmer-lg  { height: 70px; }
+.sc-shimmer-lg2 { height: 70px; opacity: 0.6; }
+.sc-cycle-labels-gap { margin-top: 6px; }
+
+@media (max-width: 900px) {
+  .sc-dashboard { grid-template-columns: 1fr; }
+  .sc-full { grid-column: 1; }
+  .sc-hangar-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Light mode overrides ── */
+[data-theme="light"] .sc-page {
+  background: #f0f4fc;
+}
+[data-theme="light"] .sc-page::before {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(61,142,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 70%, rgba(61,142,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 20%, rgba(61,142,255,0.35) 0%, transparent 100%);
+}
+[data-theme="light"] .sc-page::after {
+  background-image:
+    linear-gradient(rgba(61,142,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,142,255,0.06) 1px, transparent 1px);
+}
+[data-theme="light"] { --void: #f0f4fc; --deep: #e8eef8; --hull: #dde6f5; --panel: #eaf0fa; --console: #e0e8f4; --border-dim: rgba(61,142,255,0.2); --border-active: rgba(61,142,255,0.5); --text: #2a3a5c; --text-dim: #6a80a8; --text-bright: #0f1e3a; }
+[data-theme="light"] .sc-panel { background: #eaf0fa; }
+[data-theme="light"] .sc-panel-header { background: linear-gradient(180deg, #dde6f5 0%, transparent 100%); }
+[data-theme="light"] .sc-service-row { background: #e0e8f4; }
+[data-theme="light"] .sc-service-row:hover { background: #dde6f5; }
+[data-theme="light"] .sc-inc { background: #e0e8f4; }
+[data-theme="light"] .sc-phase { background: #e0e8f4; }
+[data-theme="light"] .sc-timer-block { background: #d4dff0; }
+[data-theme="light"] .sc-next-row { background: #e0e8f4; }
+[data-theme="light"] .sc-lights-panel { background: #e0e8f4; }
+[data-theme="light"] .sc-timing-box { background: #d4dff0; }
+[data-theme="light"] .sc-foot { background: #dde6f5; }
+[data-theme="light"] .sc-btn { background: rgba(61,142,255,0.12); }
+[data-theme="light"] .sc-btn:hover { background: rgba(61,142,255,0.25); }
+[data-theme="light"] .sc-cycle-bar { background: #d4dff0; }
+
+/* ── Theme toggle button ── */
+.theme-toggle {
+  position: fixed;
+  top: 18px; right: 20px;
+  z-index: 999;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-dim);
+  background: var(--panel);
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  transition: background 0.2s, border-color 0.2s, color 0.15s, transform 0.15s;
+}
+.theme-toggle:hover { color: var(--text-bright); border-color: var(--border-active); transform: scale(1.08); }
+.theme-toggle .icon-sun  { display: none; }
+.theme-toggle .icon-moon { display: block; }
+[data-theme="light"] .theme-toggle .icon-sun  { display: block; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+/* Smooth theme transition */
+.sc-page, .sc-panel, .sc-panel-header, .sc-service-row, .sc-phase,
+.sc-timer-block, .sc-next-row, .sc-lights-panel, .sc-timing-box,
+.sc-foot, .sc-btn, .sc-cycle-bar {
+  transition: background 0.22s ease, border-color 0.22s ease, color 0.18s ease;
+}
+
+</style>
+
+<div class="sc-page">
+
+<!-- Dark/light mode toggle -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+</button>
+<div class="sc-wrapper">
+
+  <!-- Header -->
+  <header class="sc-header">
+    <div class="sc-logo">
+      <div class="sc-logo-icon">
+        <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil">
+      </div>
+      <div class="sc-logo-text">
+        <div class="main">BlightVeil <span class="main-sep">·</span> Ops Dashboard</div>
+        <div class="sub">Star Citizen Operations Center</div>
+      </div>
+    </div>
+    <div class="sc-header-right">
+      <a href="{% url 'unifieduser:index' %}" class="sc-btn sc-btn-portal">← Portal</a>
+      <div class="sc-clock">
+        <div class="utc" id="scUtcClock">00:00:00 UTC Server Time</div>
+        <div id="scDateLine">—</div>
+        <div class="uee" id="scUeeClock">UEE Time—</div>
+      </div>
+      <div class="sc-dot"></div>
+    </div>
+  </header>
+
+  <!-- Dashboard -->
+  <div class="sc-dashboard">
+
+    <!-- RSI Service Status -->
+    <div class="sc-panel">
+      <div class="sc-panel-header">
+        <div class="sc-panel-title">🛰️ RSI Service Status</div>
+        <div class="sc-badge sc-badge-live" id="scStatusBadge">LIVE</div>
+      </div>
+      <div class="sc-panel-body">
+        <div class="sc-service-grid" id="scServiceGrid">
+          <div class="sc-shimmer sc-shimmer-sm"></div>
+          <div class="sc-shimmer sc-shimmer-sm2"></div>
+          <div class="sc-shimmer sc-shimmer-sm3"></div>
+        </div>
+      </div>
+      <div class="sc-foot">
+        <div class="sc-foot-text">Last sync: <span id="scLastSync">—</span></div>
+        <button type="button" class="sc-btn" onclick="fetchRSIStatus()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Active Incidents -->
+    <div class="sc-panel">
+      <div class="sc-panel-header">
+        <div class="sc-panel-title">⚠️ Active Incidents</div>
+        <div class="sc-badge sc-badge-sync" id="scIncidentCount">0 active</div>
+      </div>
+      <div class="sc-panel-body">
+        <div class="sc-incident-list" id="scIncidentList">
+          <div class="sc-shimmer sc-shimmer-lg"></div>
+          <div class="sc-shimmer sc-shimmer-lg2"></div>
+        </div>
+      </div>
+      <div class="sc-foot">
+        <div class="sc-foot-text">Source: <span>RSI Status Page</span></div>
+        <a class="sc-btn" href="https://status.robertsspaceindustries.com/" target="_blank" rel="noopener noreferrer">↗ View RSI</a>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="sc-panel sc-full">
+      <div class="sc-panel-header">
+        <div class="sc-panel-title">📋 Recent Activity</div>
+        <div class="sc-badge sc-badge-sync" id="scRecentBadge">—</div>
+      </div>
+      <div class="sc-panel-body">
+        <div class="sc-incident-list" id="scRecentList">
+          <div class="sc-shimmer sc-shimmer-lg"></div>
+          <div class="sc-shimmer sc-shimmer-lg2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Hangar Timer -->
+    <div class="sc-panel sc-full">
+      <div class="sc-panel-header">
+        <div class="sc-panel-title">🏢 Executive Hangar Timer</div>
+        <div class="sc-badge sc-badge-sync" id="scHangarBadge">CALCULATING</div>
+      </div>
+      <div class="sc-panel-body">
+        <div class="sc-hangar-grid">
+
+          <!-- Left: phase + timer -->
+          <div>
+            <div class="sc-phase" id="scPhaseDisplay">
+              <div class="sc-phase-lbl">Current Phase</div>
+              <div class="sc-phase-name" id="scPhaseName">---</div>
+              <div class="sc-phase-sub" id="scPhaseSub">Calculating...</div>
+              <div class="sc-timer-block">
+                <div class="sc-timer-val" id="scTimerVal">--:--:--</div>
+                <div class="sc-timer-lbl" id="scTimerLbl">Phase Ends</div>
+              </div>
+            </div>
+
+            <div class="sc-next-row">
+              <div class="sc-next-lbl">⏳ Next transition</div>
+              <div class="sc-next-val" id="scNextText">—</div>
+            </div>
+
+            <div class="sc-advisory sc-advisory-red" id="scAdvisory">
+              <div class="sc-advisory-icon" id="scAdvIcon">🔴</div>
+              <div>
+                <div class="sc-advisory-text" id="scAdvText">DO NOT INSERT COMPBOARDS</div>
+                <div class="sc-advisory-sub" id="scAdvSub">Hangar will not open during RED phase</div>
+              </div>
+            </div>
+
+            <div><span class="sc-patch-tag" id="scPatchTag">Loading patch info...</span></div>
+          </div>
+
+          <!-- Right: lights -->
+          <div>
+            <div class="sc-lights-panel">
+              <div class="sc-lights-hdr">Light Sequence Monitor</div>
+              <div class="sc-lights-row" id="scLightsRow">
+                <div class="sc-orb sc-orb-dark"></div>
+                <div class="sc-orb sc-orb-dark"></div>
+                <div class="sc-orb sc-orb-dark"></div>
+                <div class="sc-orb sc-orb-dark"></div>
+                <div class="sc-orb sc-orb-dark"></div>
+              </div>
+              <div class="sc-lights-desc" id="scLightsDesc">Calculating light sequence...</div>
+
+              <div class="sc-cycle">
+                <div class="sc-cycle-labels">
+                  <span>Cycle Progress</span>
+                  <span id="scCyclePct">0%</span>
+                </div>
+                <div class="sc-cycle-bar">
+                  <div class="sc-cycle-fill sc-cycle-red" id="scCycleFill"></div>
+                </div>
+                <div class="sc-cycle-labels sc-cycle-labels-gap">
+                  <span>Open Phase</span>
+                  <span>Close Phase</span>
+                </div>
+              </div>
+
+              <div class="sc-timing">
+                <div class="sc-timing-box">
+                  <div class="sc-timing-lbl">OPEN PHASE</div>
+                  <div class="sc-timing-val sc-timing-green" id="scOpenDur">—</div>
+                </div>
+                <div class="sc-timing-box">
+                  <div class="sc-timing-lbl">CLOSE PHASE</div>
+                  <div class="sc-timing-val sc-timing-red" id="scCloseDur">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="sc-foot">
+        <div class="sc-foot-text">Synced: <span>exec.xyxyll.com</span> · Patch: <span id="scPatchVer">SC 4.4.0</span></div>
+        <a class="sc-btn" href="https://exec.xyxyll.com/" target="_blank" rel="noopener noreferrer">↗ Official Timer</a>
+      </div>
+    </div>
+
+  </div><!-- /sc-dashboard -->
+</div><!-- /sc-wrapper -->
+</div><!-- /sc-page -->
+
+<script>
+// ─── Hangar constants (client-side fallback, overridden by /sc/api/sc-hangar/) ──
+let HANGAR = {
+  OPEN_DURATION:    3900338,
+  CLOSE_DURATION:   7200623,
+  INITIAL_OPEN_MS:  new Date('2026-02-01T22:09:54.775Z').getTime(),
+  LIGHT_THRESHOLDS: [
+    {min:0,           max:12*60*1000,  lights:5},
+    {min:12*60*1000,  max:24*60*1000,  lights:4},
+    {min:24*60*1000,  max:36*60*1000,  lights:3},
+    {min:36*60*1000,  max:48*60*1000,  lights:2},
+    {min:48*60*1000,  max:60*60*1000,  lights:1},
+    {min:60*60*1000,  max:65*60*1000,  lights:0},
+    {min:65*60*1000,  max:89*60*1000,  lights:0},
+    {min:89*60*1000,  max:113*60*1000, lights:1},
+    {min:113*60*1000, max:137*60*1000, lights:2},
+    {min:137*60*1000, max:161*60*1000, lights:3},
+    {min:161*60*1000, max:185*60*1000, lights:4},
+  ]
+};
+HANGAR.CYCLE = HANGAR.OPEN_DURATION + HANGAR.CLOSE_DURATION;
+
+// ─── RSI Status ──────────────────────────────────────────────
+const STATUS_MAP = {
+  operational: {cls:'operational', label:'Operational'},
+  degraded:    {cls:'degraded',    label:'Degraded'},
+  maintenance: {cls:'maintenance', label:'Maintenance'},
+  partial:     {cls:'partial',     label:'Partial Disruption'},
+  major:       {cls:'major',       label:'Major Disruption'},
+  issues:      {cls:'issues',      label:'Issues'},
+  _other:      {cls:'unknown',     label:'Unknown'},
+};
+
+async function fetchRSIStatus() {
+  document.getElementById('scStatusBadge').textContent = '...';
+  try {
+    // Uses your Django proxy — no CORS issues
+    const resp = await fetch('/sc/api/sc-status/');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    renderServices(data.systems || []);
+    renderIncidents(data.systems || []);
+    document.getElementById('scLastSync').textContent = new Date().toLocaleTimeString();
+    document.getElementById('scStatusBadge').textContent = 'LIVE';
+    document.getElementById('scStatusBadge').className = 'sc-badge sc-badge-live';
+  } catch (e) {
+    document.getElementById('scStatusBadge').textContent = 'ERROR';
+    document.getElementById('scStatusBadge').className = 'sc-badge sc-badge-error';
+    document.getElementById('scServiceGrid').innerHTML = `
+      <div class="sc-empty"><span class="icon">📡</span>Could not reach RSI status endpoint.</div>`;
+  }
+}
+
+function renderServices(systems) {
+  if (!systems.length) return;
+  document.getElementById('scServiceGrid').innerHTML = systems.map(sys => {
+    const t = STATUS_MAP[sys.status] || STATUS_MAP._other;
+    const hasIssues = (sys.unresolvedIssues || []).length > 0;
+    const issueUrl = hasIssues
+      ? (sys.unresolvedIssues[0].permalink ? sys.unresolvedIssues[0].permalink.replace(/index\.html$/, '').replace(/index\.xml$/, '').replace(/\/$/, '') + '/index.html' : 'https://status.robertsspaceindustries.com/')
+      : null;
+    const nameHtml = issueUrl
+      ? `<a href="${safeUrl(issueUrl)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${esc(sys.name)} ↗</a>`
+      : esc(sys.name);
+    return `<div class="sc-service-row">
+      <div class="sc-service-name">${nameHtml}</div>
+      <div class="sc-service-status">
+        <div class="sc-ind sc-ind-${t.cls}"></div>
+        <span class="sc-lbl-${t.cls}">${t.label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }  // XSS-04
+function safeUrl(u){ try { const p = new URL(u, location.origin).protocol; return (p === 'http:' || p === 'https:') ? u : '#'; } catch(e){ return '#'; } }
+
+function renderIncidents(systems) {
+  const seen = new Set();
+  const issues = [];
+  systems.forEach(sys => (sys.unresolvedIssues||[]).forEach(i => {
+    const key = i.filename || i.title || '';
+    if (seen.has(key)) return;
+    seen.add(key);
+    issues.push({...i, system: sys.name});
+  }));
+
+  const badge = document.getElementById('scIncidentCount');
+  badge.textContent = `${issues.length} active`;
+  badge.className = `sc-badge ${issues.length > 0 ? 'sc-badge-warn' : 'sc-badge-sync'}`;
+
+  if (!issues.length) {
+    document.getElementById('scIncidentList').innerHTML = `
+      <div class="sc-empty"><span class="icon">✅</span>No active incidents — all systems nominal</div>`;
+    return;
+  }
+
+  document.getElementById('scIncidentList').innerHTML = issues.map(i => {
+    const sev = i.severity || 'partial';
+    const url = i.permalink ? i.permalink.replace(/index\.html$/, '').replace(/index\.xml$/, '').replace(/\/$/, '') + '/index.html' : null;
+    const titleHtml = url
+      ? `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${esc(i.title||'Unnamed Incident')}</a>`
+      : esc(i.title||'Unnamed Incident');
+    return `<div class="sc-inc sc-inc-${esc(sev)}">
+      <div class="sc-inc-top">
+        <div class="sc-inc-title">${titleHtml}</div>
+        <div class="sc-sev sc-sev-${esc(sev)}">${esc(sev.toUpperCase())}</div>
+      </div>
+      <div class="sc-inc-meta">
+        <span>🛰️ ${esc(i.system)}</span>
+        <span>⏱️ ${timeAgo(i.createdAt)}</span>
+        ${url ? `<span><a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--blue);text-decoration:none">↗ Details</a></span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Recent Activity ──────────────────────────────────────────
+async function loadRecentActivity() {
+  try {
+    const resp = await fetch('/sc/api/sc-recent/');
+    if (!resp.ok) return;
+    const items = await resp.json();
+    const badge = document.getElementById('scRecentBadge');
+    const list  = document.getElementById('scRecentList');
+    badge.textContent = `${items.length} resolved`;
+    if (!items.length) {
+      list.innerHTML = `<div class="sc-empty"><span class="icon">📋</span>No recent activity</div>`;
+      return;
+    }
+    list.innerHTML = items.map(i => {
+      const url = i.permalink && i.permalink.trim() ? i.permalink : null;
+      const titleHtml = url
+        ? `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">✅ [Resolved] ${esc(i.title||'Unknown')}</a>`
+        : `✅ [Resolved] ${esc(i.title||'Unknown')}`;
+      const affected = esc(Array.isArray(i.affected) ? i.affected.join(', ') : (i.affected || 'Live Service'));
+      const resolvedAgo = i.resolved_at ? timeAgo(i.resolved_at) : '—';
+      return `<div class="sc-inc sc-inc-resolved">
+        <div class="sc-inc-top">
+          <div class="sc-inc-title">${titleHtml}</div>
+          <div class="sc-sev" style="background:rgba(57,255,126,0.15);color:var(--green);border-color:var(--green)">RESOLVED</div>
+        </div>
+        <div class="sc-inc-meta">
+          <span>⏱️ ${resolvedAgo}</span>
+          <span>🛰️ ${affected}</span>
+          ${url ? `<span><a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--blue);text-decoration:none">↗ Details</a></span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error('Recent activity fetch failed', e); }
+}
+
+// ─── Hangar Timer ─────────────────────────────────────────────
+// Server-driven: API provides authoritative time_remaining + all display state.
+// Client just counts down between polls — no local cycle math needed.
+
+let HANGAR_STATE     = null;  // last full API response
+let HANGAR_FETCHED_AT = null;  // Date.now() when we received it
+
+async function fetchHangarConfig() {
+  try {
+    const resp = await fetch('/sc/api/sc-hangar/');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    HANGAR_STATE      = data;
+    HANGAR_FETCHED_AT = Date.now();
+
+    if (data.patch_info) {
+      document.getElementById('scPatchTag').textContent = data.patch_info;
+      document.getElementById('scPatchVer').textContent = data.patch_info.match(/Patch\s+([\d.A-Z-]+)/)?.[1] || 'SC 4.6.0';
+    }
+    if (data.open_duration_secs)
+      document.getElementById('scOpenDur').textContent  = `~${Math.round(data.open_duration_secs / 60)} min`;
+    if (data.close_duration_secs)
+      document.getElementById('scCloseDur').textContent = `~${Math.round(data.close_duration_secs / 60)} min`;
+
+    console.log(`[SC] Hangar synced — phase=${data.phase} remaining=${data.time_remaining}s source=${data.sync_source}`);
+  } catch(e) {
+    console.warn('[SC] Hangar fetch failed:', e);
+  }
+}
+
+function calcHangar() {
+  if (!HANGAR_STATE) return null;
+
+  // Tick down server's time_remaining using elapsed wall-clock seconds
+  const elapsedSecs = Math.floor((Date.now() - HANGAR_FETCHED_AT) / 1000);
+  let remaining     = Math.max(0, HANGAR_STATE.time_remaining - elapsedSecs);
+  let phase         = HANGAR_STATE.phase;
+
+  // If countdown hit zero, phase has flipped; next poll will re-sync properly
+  if (remaining === 0 && elapsedSecs > HANGAR_STATE.time_remaining) {
+    phase = phase === 'GREEN' ? 'RED' : 'GREEN';
+  }
+
+  // Advance cycle progress and lights in real time between polls
+  const cycleSecs = (HANGAR_STATE.open_duration_secs || 3900) + (HANGAR_STATE.close_duration_secs || 7200);
+  const inCycleSecs = (HANGAR_STATE.cycle_percent / 100 * cycleSecs) + elapsedSecs;
+  const pct = (inCycleSecs % cycleSecs) / cycleSecs * 100;
+
+  const inCycleMs = (inCycleSecs % cycleSecs) * 1000;
+  const threshold = HANGAR.LIGHT_THRESHOLDS.find(t => inCycleMs >= t.min && inCycleMs < t.max);
+  const lights    = threshold ? threshold.lights : HANGAR_STATE.active_lights;
+
+  return { phase, remaining, lights, pct };
+}
+function fmtSecs(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function timeAgo(d) {
+  if (!d) return '—';
+  const diff = Date.now() - new Date(d).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  return h < 24 ? `${h}h ago` : `${Math.floor(h/24)}d ago`;
+}
+
+function updateHangar() {
+  const result = calcHangar();
+  if (!result) return;  // not yet synced
+  const {phase, remaining, lights, pct} = result;
+
+  // Phase display
+  const disp = document.getElementById('scPhaseDisplay');
+  disp.className = `sc-phase phase-${phase.toLowerCase()}`;
+  document.getElementById('scPhaseName').textContent = phase === 'GREEN' ? 'ONLINE' : 'OFFLINE';
+  document.getElementById('scPhaseSub').textContent  = phase === 'GREEN' ? 'Hangar is Open' : 'Hangar is Closed';
+  document.getElementById('scTimerVal').textContent  = fmtSecs(remaining);
+  document.getElementById('scTimerLbl').textContent  = phase === 'GREEN' ? 'Until Close' : 'Until Open';
+  document.getElementById('scNextText').textContent  = `${phase === 'GREEN' ? 'Closes' : 'Opens'} ~${fmtSecs(remaining)}`;
+
+  // Badge
+  const badge = document.getElementById('scHangarBadge');
+  badge.textContent = phase === 'GREEN' ? '● ONLINE' : '● OFFLINE';
+  badge.className   = `sc-badge ${phase === 'GREEN' ? 'sc-badge-live' : 'sc-badge-error'}`;
+
+  // Advisory
+  const adv = document.getElementById('scAdvisory');
+  if (phase === 'GREEN') {
+    adv.className = 'sc-advisory sc-advisory-green';
+    document.getElementById('scAdvIcon').textContent = '✅';
+    document.getElementById('scAdvText').textContent = 'COMPBOARDS CAN BE INSERTED';
+    document.getElementById('scAdvSub').textContent  = 'Hangar is in GREEN phase — open for operations';
+  } else {
+    adv.className = 'sc-advisory sc-advisory-red';
+    document.getElementById('scAdvIcon').textContent = '🔴';
+    document.getElementById('scAdvText').textContent = 'DO NOT INSERT COMPBOARDS';
+    document.getElementById('scAdvSub').textContent  = 'Hangar will not open during RED phase';
+  }
+
+  // Lights
+  const orbs = document.getElementById('scLightsRow').children;
+  for (let i = 0; i < 5; i++) {
+    orbs[i].className = `sc-orb ${i < lights ? 'sc-orb-lit' : (phase === 'RED' ? 'sc-orb-red' : 'sc-orb-dark')}`;
+  }
+
+  // Lights description
+  let desc;
+  if (phase === 'RED') {
+    desc = lights === 0 ? 'All lights off — first light turns green in ~24 min'
+         : lights === 5 ? 'All lights green — hangar opens very soon!'
+         : `${lights}/5 lights green — approaching open`;
+  } else {
+    desc = lights === 5 ? 'All lights green — hangar fully open!'
+         : lights === 0 ? 'All lights off — hangar closing soon!'
+         : `${lights}/5 lights remaining`;
+  }
+  document.getElementById('scLightsDesc').textContent = desc;
+
+  // Cycle bar
+  const fill = document.getElementById('scCycleFill');
+  fill.style.width = `${pct.toFixed(1)}%`;
+  fill.className   = `sc-cycle-fill ${phase === 'GREEN' ? 'sc-cycle-green' : 'sc-cycle-red'}`;
+  document.getElementById('scCyclePct').textContent = `${pct.toFixed(0)}%`;
+}
+
+// ─── UEE Clock (Calibrated) ────────────────────────────────────────────
+// Official Star Citizen time dilation: 1 real second = 6 game seconds
+// Calibrated using UniverseTime from screenshot:
+//   Real: 2026-04-17T23:42:19Z
+//   UEE:  2987-10-07T22:13:54Z
+const SC_RATIO = 6;
+
+// Reference point (using UniverseTime from your screenshot)
+const REF_REAL_MS = new Date('2026-04-17T23:42:19Z').getTime();
+const REF_UEE_MS  = new Date('2987-10-07T22:13:54Z').getTime();
+
+// Pre-calculate offset for better performance
+const UEE_OFFSET = REF_UEE_MS - (REF_REAL_MS * SC_RATIO);
+
+const UEE_DAYS   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const UEE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function updateClock() {
+  const now = new Date();
+  
+  // UTC / Server Time display
+  document.getElementById('scUtcClock').textContent = 
+    now.toISOString().split('T')[1].split('.')[0] + ' UTC Server Time';
+  document.getElementById('scDateLine').textContent = 
+    now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  // UEE time calculation using the offset method
+  const ueeMs = (now.getTime() * SC_RATIO) + UEE_OFFSET;
+  const uee = new Date(ueeMs);
+  
+  const h = String(uee.getUTCHours()).padStart(2, '0');
+  const m = String(uee.getUTCMinutes()).padStart(2, '0');
+  const s = String(uee.getUTCSeconds()).padStart(2, '0');
+  const day = UEE_DAYS[uee.getUTCDay()];
+  const month = UEE_MONTHS[uee.getUTCMonth()];
+  const date = uee.getUTCDate();
+  const year = uee.getUTCFullYear();
+  
+  document.getElementById('scUeeClock').textContent = 
+    `UEE ${day} ${month} ${date} ${h}:${m}:${s} ${year}`;
+}
+
+// Optional: Calibration helper for future adjustments
+window.calibrateUEE = function(realISO, ueeISO) {
+  const realMs = new Date(realISO).getTime();
+  const ueeMs = new Date(ueeISO).getTime();
+  const newOffset = ueeMs - (realMs * SC_RATIO);
+  console.log(`// New UEE_OFFSET = ${newOffset}`);
+  console.log(`// Copy this value and replace the existing UEE_OFFSET constant`);
+  return newOffset;
+};
+
+// ─── Boot ─────────────────────────────────────────────────────
+updateClock();
+setInterval(updateClock, 1000);
+
+// Wait for the API sync before starting the countdown so the first
+// rendered value is already correct (no visible jump on load).
+fetchHangarConfig().then(() => {
+  updateHangar();
+  setInterval(updateHangar, 1000);
+});
+setInterval(fetchHangarConfig, 30 * 1000); // re-sync every 30s (pure math, no external calls)
+
+fetchRSIStatus();
+setInterval(fetchRSIStatus, 60 * 1000); // refresh RSI status every minute
+
+loadRecentActivity();
+setInterval(loadRecentActivity, 5 * 60 * 1000); // refresh recent activity every 5 min
+
+// ─── Theme Toggle ─────────────────────────────────────────────
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+
+</script>
+
+{% endblock %}

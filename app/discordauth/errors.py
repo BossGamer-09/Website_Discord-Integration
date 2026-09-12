@@ -1,0 +1,3 @@
+
+class RequiresHTTPRequest(Exception):
+    pass

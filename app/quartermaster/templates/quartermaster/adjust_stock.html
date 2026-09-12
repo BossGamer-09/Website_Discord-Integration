@@ -1,0 +1,189 @@
+{% extends "quartermaster/_base.html" %}
+{% load qm_filters %}
+{% block title %}Adjust Quantities{% endblock %}
+{% block wm_page %}Loot — Adjust{% endblock %}
+{% block subtitle %}Set current stock quantities for all org stockpile items{% endblock %}
+
+{% block content %}
+<style>
+.adj-back{margin-bottom:20px;}
+.adj-back a{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;}
+.adj-back a:hover{background:var(--accent-light);}
+
+.adj-cat-label{font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle);padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+
+.adj-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;}
+
+.adj-hdr{display:grid;grid-template-columns:1fr 120px 120px 180px 110px;gap:12px;padding:8px 16px;font-size:0.68rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle);border-bottom:1px solid var(--border);}
+
+.adj-row{display:grid;grid-template-columns:1fr 120px 120px 180px 110px;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);align-items:center;}
+.adj-row:last-child{border-bottom:none;}
+.adj-row:hover{background:var(--accent-light);}
+
+.adj-name{font-weight:600;font-size:0.88rem;}
+.adj-loc{font-family:'Space Mono',monospace;font-size:0.68rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:inline-block;white-space:nowrap;}
+[data-theme="dark"] .adj-loc{background:#1a2540;color:#60a5fa;}
+.adj-loc-universal{color:var(--ink-subtle);font-size:0.78rem;}
+
+.adj-current{font-family:'Space Mono',monospace;font-size:0.82rem;}
+.adj-current span{color:var(--ink-subtle);font-size:0.72rem;}
+
+.adj-meta{font-size:0.72rem;color:var(--ink-subtle);line-height:1.5;}
+
+.adj-input-wrap{display:flex;gap:6px;align-items:center;}
+.adj-input{font-family:'Space Mono',monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--ink);width:90px;text-align:right;transition:border-color 0.15s;}
+.adj-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.adj-input::-webkit-inner-spin-button,.adj-input::-webkit-outer-spin-button{opacity:0.5;}
+
+.adj-set-btn{font-size:0.75rem;padding:5px 10px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600;white-space:nowrap;transition:opacity 0.15s;}
+.adj-set-btn:hover{opacity:0.85;}
+
+/* delta highlight via JS */
+.adj-input.changed{border-color:var(--accent);background:var(--accent-light);}
+
+.adj-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:28px;padding:16px 0;border-top:1px solid var(--border);}
+.adj-save-btn{font-size:0.9rem;padding:10px 28px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700;transition:opacity 0.15s;}
+.adj-save-btn:hover{opacity:0.88;}
+.adj-reset-btn{font-size:0.82rem;padding:8px 18px;border-radius:10px;border:1px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;transition:all 0.15s;}
+.adj-reset-btn:hover{border-color:var(--accent);color:var(--accent);}
+.adj-changed-count{font-size:0.82rem;color:var(--ink-subtle);}
+#adj-changed-msg{display:none;}
+</style>
+
+<div class="adj-back">
+  <a href="{% url 'quartermaster:overview' %}">← Back to Overview</a>
+</div>
+
+<form method="post" id="adj-form">
+  {% csrf_token %}
+
+  {% regroup items by category as cat_list %}
+  {% for cat in cat_list %}
+  {% with cat.grouper as cat_key %}
+  <div class="adj-card">
+    <div class="adj-cat-label">
+      {% if cat_key == "CURRENCY" %}💰
+      {% elif cat_key == "WIKELO_CURRENCY" %}🪙
+      {% elif cat_key == "WIKELO_MATERIAL" %}🪨
+      {% elif cat_key == "MONSTER_PART" %}🦷
+      {% elif cat_key == "MILITARY" %}🎖️
+      {% elif cat_key == "COMPONENT" %}⚙️
+      {% elif cat_key == "WEAPON" %}🔫
+      {% elif cat_key == "LEGACY" %}📦
+      {% else %}🔹{% endif %}
+      {{ cat.list.0.get_category_display }}
+    </div>
+    <div class="adj-hdr">
+      <div>Item</div><div>Location</div><div>Current Qty</div><div>Thresholds</div><div>New Qty</div>
+    </div>
+    {% for item in cat.list %}
+    {% with qty=item.stock.quantity|default:0 %}
+    <div class="adj-row">
+      <div class="adj-name">{{ item.name }}</div>
+      <div>
+        {% if item.location_agnostic %}
+          <span class="adj-loc-universal">Universal</span>
+        {% else %}
+          <span class="adj-loc">{{ item.get_location_display }}</span>
+        {% endif %}
+      </div>
+      <div class="adj-current">
+        {{ qty|commafy }}
+        {% if item.category == "CURRENCY" %}
+          {% if "merit" in item.name|lower %}
+            {% with sfx=qty|prison_time_suffix %}{% if sfx %}<div style="font-size:0.7rem;color:var(--accent);margin-top:1px;">{{ sfx }}</div>{% endif %}{% endwith %}
+          {% else %}
+            {% with sfx=qty|auec_suffix %}{% if sfx %}<div style="font-size:0.7rem;color:var(--accent);margin-top:1px;">{{ sfx }}</div>{% endif %}{% endwith %}
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="adj-meta">
+        {% if item.low_threshold %}🔴 Low: {{ item.low_threshold }}<br>{% endif %}
+        {% if item.target_qty %}🎯 Target: {{ item.target_qty }}<br>{% endif %}
+        {% if item.excess_threshold %}🔵 Excess: {{ item.excess_threshold }}{% endif %}
+        {% if not item.low_threshold and not item.target_qty and not item.excess_threshold %}
+          <span style="color:var(--ink-subtle);">No thresholds</span>
+        {% endif %}
+      </div>
+      <div class="adj-input-wrap">
+        <input
+          class="adj-input comma-input"
+          type="text"
+          inputmode="numeric"
+          name="qty_{{ item.pk }}"
+          value="{{ qty|commafy }}"
+          data-orig="{{ qty|commafy }}"
+          autocomplete="off"
+        >
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+  {% if not items %}
+  <div style="padding:32px 20px;text-align:center;color:var(--ink-subtle);background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);">
+    No stockpile items found. Add them via the admin panel or <code>/qm add_item</code>.
+  </div>
+  {% endif %}
+
+  <div class="adj-footer">
+    <div>
+      <span class="adj-changed-count" id="adj-changed-msg">
+        <span id="adj-changed-num">0</span> item(s) changed
+      </span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" class="adj-reset-btn" id="adj-reset-btn">Reset</button>
+      <button type="submit" class="adj-save-btn">💾 Save All Changes</button>
+    </div>
+  </div>
+</form>
+
+<script>
+(function(){
+  var inputs  = document.querySelectorAll('.comma-input');
+  var countEl = document.getElementById('adj-changed-num');
+  var msgEl   = document.getElementById('adj-changed-msg');
+
+  function commaFormat(v){
+    var n=parseInt(v.replace(/,/g,''),10);
+    return isNaN(n)?v:n.toLocaleString('en-US');
+  }
+  function rawVal(inp){ return inp.value.replace(/,/g,''); }
+
+  function updateCount(){
+    var n=0;
+    inputs.forEach(function(inp){
+      var changed=rawVal(inp)!==rawVal({value:inp.dataset.orig});
+      inp.classList.toggle('changed',changed);
+      if(changed) n++;
+    });
+    countEl.textContent=n;
+    msgEl.style.display=n>0?'inline':'none';
+  }
+
+  inputs.forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var pos=inp.selectionStart,raw=inp.value.replace(/,/g,''),prev=inp.value.length;
+      inp.value=commaFormat(raw);
+      var diff=inp.value.length-prev;
+      inp.setSelectionRange(pos+diff,pos+diff);
+      updateCount();
+    });
+    inp.addEventListener('focus',function(){inp.select();});
+  });
+
+  document.getElementById('adj-reset-btn').addEventListener('click',function(){
+    inputs.forEach(function(inp){
+      inp.value=inp.dataset.orig;
+      inp.classList.remove('changed');
+    });
+    countEl.textContent='0';
+    msgEl.style.display='none';
+  });
+})();
+</script>
+{% endblock %}

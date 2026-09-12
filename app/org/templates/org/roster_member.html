@@ -1,0 +1,132 @@
+{% extends "bv_base.html" %}
+{% load static %}
+
+{% block title %}{{ display_name }} – Roster – BlightVeil{% endblock %}
+
+{% block shell_class %}bv-shell-narrow{% endblock %}
+
+{% block extra_css %}
+.hero{display:flex;align-items:center;gap:20px;padding:24px 22px;}
+.hero-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:1.3rem;color:#fff;flex-shrink:0;}
+.hero-name{font-family:var(--font-display);font-weight:800;font-size:1.25rem;color:var(--ink);}
+.hero-rank{color:var(--ink-muted);font-size:.85rem;margin-top:3px;}
+.field-list{padding:4px 0;}
+.field-row{display:flex;padding:10px 22px;border-bottom:1px solid var(--border);gap:16px;align-items:baseline;}
+.field-row:last-child{border-bottom:none;}
+.field-row-col{display:flex;flex-direction:column;padding:12px 22px;border-bottom:1px solid var(--border);}
+.field-row-col:last-child{border-bottom:none;}
+.field-label{font-size:.78rem;color:var(--ink-subtle);width:130px;flex-shrink:0;}
+.field-value{font-size:.85rem;color:var(--ink);}
+.ref-status{color:var(--ink-subtle);font-size:.77rem;margin-left:6px;}
+.ref-link{color:var(--accent);text-decoration:none;}
+.ref-link:hover{text-decoration:underline;}
+.note-msg{font-size:.84rem;color:var(--ink);}
+.note-date{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-subtle);margin-top:3px;}
+{% endblock %}
+
+{% block content %}
+
+<a class="bv-back" href="{% url 'org:roster' %}">← Back to Roster</a>
+
+<div class="bv-card">
+  <div class="hero">
+    <div class="hero-avatar">{{ display_name|slice:":1"|upper }}</div>
+    <div>
+      <div class="hero-name">{{ display_name }}</div>
+      <div class="hero-rank">{% if member.rank %}{{ member.rank.name }}{% else %}No rank assigned{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="bv-card">
+  <div class="bv-card-header"><h2>Identity</h2></div>
+  <div class="field-list">
+    <div class="field-row"><span class="field-label">Display Name</span><span class="field-value">{{ display_name }}</span></div>
+    {% if discord_user and discord_user.main_guild_nick %}
+    <div class="field-row"><span class="field-label">Server Nick</span><span class="field-value">{{ discord_user.main_guild_nick }}</span></div>
+    {% endif %}
+    <div class="field-row"><span class="field-label">Rank</span><span class="field-value">{% if member.rank %}<span class="bv-badge bv-badge-accent">{{ member.rank.name }}</span>{% else %}—{% endif %}</span></div>
+    <div class="field-row"><span class="field-label">Timezone</span><span class="field-value bv-mono">{{ member.timezone_str|default:"—" }}</span></div>
+    {% if discord_user %}
+    <div class="field-row"><span class="field-label">Discord ID</span><span class="field-value bv-mono">{{ discord_user.discorduid }}</span></div>
+    {% if discord_user.global_name %}
+    <div class="field-row"><span class="field-label">Discord Name</span><span class="field-value">{{ discord_user.global_name }}</span></div>
+    {% endif %}
+    {% endif %}
+    <div class="field-row"><span class="field-label">Joined Portal</span><span class="field-value">{{ member.date_joined|date:"Y-m-d" }}</span></div>
+    {% if member.first_event_at %}
+    <div class="field-row"><span class="field-label">First Event</span><span class="field-value">{{ member.first_event_at|date:"Y-m-d" }}</span></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if app_data %}
+<div class="bv-card">
+  <div class="bv-card-header"><h2>Application</h2></div>
+  <div class="field-list">
+    <div class="field-row"><span class="field-label">Status</span><span class="field-value">{{ app_data.status }}</span></div>
+    <div class="field-row"><span class="field-label">Submitted</span><span class="field-value">{{ app_data.submitted_at|date:"Y-m-d" }}</span></div>
+    <div class="field-row"><span class="field-label">Discipline</span><span class="field-value">{{ app_data.discipline }}</span></div>
+    <div class="field-row"><span class="field-label">Referred By</span><span class="field-value">{{ app_data.referred_by }}</span></div>
+    <div class="field-row"><span class="field-label">Approved By</span><span class="field-value">{{ app_data.approved_by }}</span></div>
+    {% if app_data.reviewed_at %}
+    <div class="field-row"><span class="field-label">Approved On</span><span class="field-value">{{ app_data.reviewed_at|date:"Y-m-d" }}</span></div>
+    {% endif %}
+    {% if app_data.rsi_handle %}
+    <div class="field-row"><span class="field-label">RSI Handle</span><span class="field-value bv-mono">{{ app_data.rsi_handle }}</span></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if referrals %}
+<div class="bv-card">
+  <div class="bv-card-header"><h2>Referrals ({{ referrals|length }})</h2></div>
+  <div class="field-list">
+    {% for ref in referrals %}
+    <div class="field-row">
+      <span class="field-label">{{ ref.submitted_at|date:"Y-m-d" }}</span>
+      <span class="field-value">
+        {% if ref.pk %}<a class="ref-link" href="{% url 'org:roster_member' ref.pk %}">{{ ref.name }}</a>{% else %}{{ ref.name }}{% endif %}
+        <span class="ref-status">{{ ref.status }}</span>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if events %}
+<div class="bv-card">
+  <div class="bv-card-header"><h2>Event History ({{ events|length }})</h2></div>
+  <div class="field-list">
+    {% for ev in events %}
+    <div class="field-row">
+      <span class="field-label">{{ ev.date|date:"Y-m-d" }}</span>
+      <span class="field-value">
+        {{ ev.name }}
+        <span class="ref-status">{{ ev.type }}</span>
+        <span class="bv-badge bv-badge-muted">{{ ev.status }}</span>
+        {% if ev.score %}<span class="ref-status">Score: {{ ev.score }}</span>{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if notes %}
+<div class="bv-card">
+  <div class="bv-card-header"><h2>Staff Notes ({{ notes|length }})</h2></div>
+  <div class="field-list">
+    {% for n in notes %}
+    <div class="field-row-col">
+      <div class="note-msg">{{ n.message }}</div>
+      <div class="note-date">{{ n.date|date:"Y-m-d H:i" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

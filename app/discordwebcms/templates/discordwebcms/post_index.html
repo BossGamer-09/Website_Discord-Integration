@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base · BlightVeil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+  <style>
+    :root {
+      --ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;
+      --surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;
+      --accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;
+      --warning:#d97706;--warning-light:#fffbeb;--warning-border:#fde68a;
+      --radius:14px;--shadow:0 1px 4px rgba(0,0,0,.06),0 4px 24px rgba(0,0,0,.07);
+    }
+    [data-theme="dark"]{
+      --ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;
+      --surface:#0d0f14;--card-bg:#161922;--border:#252836;
+      --accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;
+      --warning:#f59e0b;--warning-light:#231c08;--warning-border:#78450a;
+      --shadow:0 1px 4px rgba(0,0,0,.4),0 4px 24px rgba(0,0,0,.5);
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;transition:background .22s,color .18s;}
+
+    .theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:background .2s,border-color .2s,color .15s,transform .15s;}
+    .theme-toggle:hover{color:var(--ink);border-color:var(--accent);transform:scale(1.08);}
+    .theme-toggle .icon-sun{display:none;}
+    [data-theme="dark"] .theme-toggle .icon-sun{display:block;}
+    [data-theme="dark"] .theme-toggle .icon-moon{display:none;}
+
+    .kb-shell{max-width:780px;margin:0 auto;padding:48px 24px 100px;}
+
+    .page-wordmark{margin-bottom:6px;display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .bv-logo-img{height:36px;width:36px;object-fit:contain;border-radius:8px;}
+    .bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);}
+    .bv-wm-sep{color:var(--ink-subtle);font-size:1rem;font-weight:300;}
+    .bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;color:var(--accent);}
+
+    .breadcrumb{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--ink-subtle);margin-bottom:24px;}
+    .breadcrumb a{color:var(--ink-muted);text-decoration:none;}
+    .breadcrumb a:hover{color:var(--accent);}
+    .breadcrumb-sep{color:var(--ink-subtle);}
+
+    /* top bar */
+    .kb-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+    .kb-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--ink);margin:0;}
+    .kb-topbar-actions{display:flex;gap:8px;}
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.85rem;cursor:pointer;text-decoration:none;border:none;transition:all .15s;white-space:nowrap;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-hover);color:#fff;}
+    .btn-ghost{background:transparent;color:var(--ink-muted);border:1.5px solid var(--border);}
+    .btn-ghost:hover{background:var(--accent-light);color:var(--ink);border-color:var(--accent);}
+
+    /* tag filter bar */
+    .tag-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+    .tag-btn{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);font-size:.78rem;font-weight:500;color:var(--ink-muted);text-decoration:none;transition:all .15s;}
+    .tag-btn:hover,.tag-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+
+    /* post list */
+    .post-list{display:flex;flex-direction:column;gap:0;}
+    .post-card{display:block;text-decoration:none;color:inherit;background:var(--card-bg);border:1px solid var(--border);border-bottom:none;padding:18px 22px;transition:background .15s;position:relative;}
+    .post-card:first-child{border-radius:var(--radius) var(--radius) 0 0;}
+    .post-card:last-child{border-bottom:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);}
+    .post-card:only-child{border-radius:var(--radius);border-bottom:1px solid var(--border);}
+    .post-card:hover{background:var(--accent-light);}
+    .post-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+    .post-tag{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--ink-muted);}
+    [data-theme="dark"] .post-tag{background:var(--border);}
+    .post-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);margin:0 0 4px;transition:color .15s;}
+    .post-card:hover .post-card-title{color:var(--accent);}
+    .post-card-meta{font-size:.78rem;color:var(--ink-subtle);display:flex;align-items:center;gap:10px;}
+    .staff-lock{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--warning-light);color:var(--warning);padding:1px 7px;border-radius:99px;border:1px solid var(--warning-border);}
+    .post-card-arrow{position:absolute;top:50%;right:18px;transform:translateY(-50%);color:var(--ink-subtle);font-size:.8rem;opacity:0;transition:opacity .15s,transform .15s;}
+    .post-card:hover .post-card-arrow{opacity:1;transform:translateY(-50%) translateX(3px);}
+
+    .empty-state{text-align:center;padding:60px 24px;color:var(--ink-subtle);background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);}
+    .empty-state-icon{font-size:2rem;margin-bottom:12px;}
+    .empty-state p{margin:0;font-size:.9rem;}
+  </style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="kb-shell">
+
+  <a href="/" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Knowledge Base</span>
+  </a>
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="breadcrumb-sep">›</span><span>Knowledge Base</span>
+  </div>
+
+  <div class="kb-topbar">
+    <h1 class="kb-title">Knowledge Base</h1>
+    {% if can_edit %}
+    <div class="kb-topbar-actions">
+      <a href="{% url 'discordwebcms:post_create' %}" class="btn btn-primary">+ New Article</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if tags %}
+  <div class="tag-bar">
+    <a href="{% url 'discordwebcms:post_index' %}" class="tag-btn {% if not active_tag %}active{% endif %}">All</a>
+    {% for tag in tags %}
+    <a href="?tag={{ tag.slug }}" class="tag-btn {% if active_tag.slug == tag.slug %}active{% endif %}">{{ tag.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if posts %}
+  <div class="post-list">
+    {% for post in posts %}
+    <a href="{% url 'discordwebcms:post_detail' post.pk %}" class="post-card">
+      {% if post.tags.all or post.visibility == 'STAFF' %}
+      <div class="post-card-tags">
+        {% if post.visibility == 'STAFF' %}<span class="staff-lock">Staff</span>{% endif %}
+        {% for tag in post.tags.all %}<span class="post-tag">{{ tag.name }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <div class="post-card-title">{{ post.title }}</div>
+      <div class="post-card-meta">
+        <span>{{ post.entries.count }} entr{{ post.entries.count|pluralize:"y,ies" }}</span>
+        <span>·</span>
+        <span>{{ post.created_at|date:"M j, Y" }}</span>
+        {% if can_edit %}<span>·</span><span>v{{ post.version }}</span>{% endif %}
+      </div>
+      <span class="post-card-arrow">→</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📭</div>
+    <p>No articles found{% if active_tag %} for tag <strong>{{ active_tag.name }}</strong>{% endif %}.</p>
+    {% if can_edit %}<p style="margin-top:10px;"><a href="{% url 'discordwebcms:post_create' %}" style="color:var(--accent);">Create the first article →</a></p>{% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Preferences · BlightVeil{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+
+<style>
+  :root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--accent-hover:#1d4ed8;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,.06),0 4px 24px rgba(0,0,0,.07);}
+  [data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--accent-hover:#60a5fa;--shadow:0 1px 4px rgba(0,0,0,.4),0 4px 24px rgba(0,0,0,.5);}
+  *,*::before,*::after{box-sizing:border-box;}
+  body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;transition:background-color .22s,color .18s;}
+  .theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .2s;}
+  .theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+  .icon-sun{display:none;}.icon-moon{display:block;}
+  [data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+
+  .page-shell{max-width:780px;margin:0 auto;padding:48px 24px 80px;}
+  .page-wordmark{margin-bottom:8px;display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .bv-logo-img{height:34px;width:34px;object-fit:contain;border-radius:7px;flex-shrink:0;}
+  .bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.02em;color:var(--ink);}
+  .bv-wm-sep{color:var(--ink-subtle);font-weight:300;}
+  .bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:.95rem;color:var(--accent);}
+  .page-subtitle{color:var(--ink-muted);font-size:.88rem;margin-bottom:32px;}
+
+  .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--ink-muted);font-size:.85rem;text-decoration:none;margin-bottom:28px;transition:color .15s;}
+  .back-link:hover{color:var(--accent);}
+
+  .section-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:24px;overflow:hidden;animation:fadeUp .35s ease both;transition:background-color .22s,border-color .22s,box-shadow .22s;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .section-header{padding:16px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .section-header h2{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin:0;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+  .pref-row{padding:16px 24px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:start;font-size:.88rem;}
+  .pref-row:last-child{border-bottom:none;}
+  .pref-name{font-weight:600;color:var(--ink);}
+  .pref-desc{color:var(--ink-muted);font-size:.82rem;margin-top:2px;}
+  .pref-label{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-subtle);margin-bottom:4px;}
+  .pref-val{font-family:'Courier New',monospace;font-size:.85rem;color:var(--ink);background:var(--accent-light);padding:3px 8px;border-radius:5px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .empty-hint{padding:40px 24px;text-align:center;color:var(--ink-subtle);font-size:.9rem;}
+  @media(max-width:640px){.pref-row{grid-template-columns:1fr;}.section-header{flex-direction:column;align-items:flex-start;}}
+</style>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell">
+  <a href="{% url 'unifieduser:index' %}" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Preferences</span>
+  </a>
+  <div class="page-subtitle">Your personal configuration settings</div>
+
+  <a class="back-link" href="{% url 'unifieduser:index' %}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to Portal
+  </a>
+
+  {% if user_settings_list %}
+  <div class="section-card">
+    <div class="section-header">
+      <span class="dot"></span>
+      <h2>User Settings</h2>
+    </div>
+    {% for item in user_settings_list %}
+    <div class="pref-row">
+      <div>
+        <div class="pref-name">{{ item.name }}</div>
+        <div class="pref-desc">{{ item.description }}</div>
+      </div>
+      <div>
+        <div class="pref-label">Current Value</div>
+        <span class="pref-val">{{ item.user_data.value|default:"—" }}</span>
+      </div>
+      <div>
+        <div class="pref-label">Default</div>
+        <span class="pref-val">{{ item.definition.default_value|default:"—" }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="section-card">
+    <div class="empty-hint">No preference settings are configured for your account.</div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click',function(){
+  var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);
+});
+</script>
+{% endblock %}

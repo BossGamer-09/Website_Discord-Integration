@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div style="max-width:560px;">
+  <h1>Import Soldiers from CSV</h1>
+  <p style="color:#666;font-size:.9rem;">
+    Required columns: <code>name</code>, <code>aim</code>, <code>teamplay</code>,
+    <code>comms</code>, <code>tactics</code>, <code>leadership</code>.<br>
+    Optional: <code>tags</code> (JSON array), <code>notes</code>, <code>notes_updated_at</code>, <code>updated_by</code>.
+  </p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>{{ form.csv_file.label_tag }} {{ form.csv_file }}</p>
+    <p>{{ form.overwrite.label_tag }} {{ form.overwrite }} <br><small>{{ form.overwrite.help_text }}</small></p>
+    <p><input type="submit" value="Import" class="button default"></p>
+  </form>
+  <p><a href="../">← Back to Soldiers</a></p>
+</div>
+{% endblock %}

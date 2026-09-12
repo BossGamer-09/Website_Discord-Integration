@@ -1,0 +1,119 @@
+{% extends "analytics/base.html" %}
+{% block title %}Org Overview{% endblock %}
+{% block nav_overview %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>📊 Org Overview</h1>
+  <p>High-level snapshot of BlightVeil's health and activity.</p>
+  <span class="period-badge">📅 Rolling 30 days</span>
+</div>
+
+<!-- KPI strip -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Active Members</div>
+    <div class="value accent">{{ total_members }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">New This Month</div>
+    <div class="value green">+{{ new_this_month }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Joined (90d)</div>
+    <div class="value">{{ recent_joins }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Left (90d)</div>
+    <div class="value {% if recent_leaves > recent_joins %}red{% else %}amber{% endif %}">{{ recent_leaves }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Events (30d)</div>
+    <div class="value accent">{{ recent_events }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">RSVPs (30d)</div>
+    <div class="value">{{ total_rsvps }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Kills (30d)</div>
+    <div class="value red">{{ recent_kills }}</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Rank distribution -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Rank Distribution</h2>
+      <span class="count-badge">{{ rank_dist|length }} ranks</span>
+    </div>
+    {% if rank_dist %}
+    <div style="padding:16px 20px;">
+      {% for row in rank_dist %}
+      {% with max_count=rank_dist.0.count %}
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:0.85rem;">{{ row.rank__prefix }} {{ row.rank__name }}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--ink-muted);">{{ row.count }}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:{% widthratio row.count max_count 100 %}%"></div>
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">No rank data available.</div>
+    {% endif %}
+  </div>
+
+  <!-- Join trend -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Member Joins — Last 6 Months</h2>
+    </div>
+    {% if join_trend %}
+    <div style="padding:16px 20px;">
+      {% for row in join_trend %}
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:0.8rem;color:var(--ink-muted);">{{ row.month|date:"M Y" }}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.8rem;">{{ row.count }}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill green" style="width:{% if join_trend %}{% widthratio row.count join_trend.0.count 100 %}{% else %}0{% endif %}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">No join trend data yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Retention summary -->
+<div class="section-card">
+  <div class="section-header"><h2>Retention (Last 90 Days)</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0;border-top:1px solid var(--border);">
+    <div style="padding:20px 24px;border-right:1px solid var(--border);text-align:center;">
+      <div style="font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--green);">{{ recent_joins }}</div>
+      <div style="font-size:0.75rem;color:var(--ink-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Joined</div>
+    </div>
+    <div style="padding:20px 24px;border-right:1px solid var(--border);text-align:center;">
+      <div style="font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--red);">{{ recent_leaves }}</div>
+      <div style="font-size:0.75rem;color:var(--ink-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Left</div>
+    </div>
+    <div style="padding:20px 24px;text-align:center;">
+      <div style="font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--accent);">
+        {% if recent_joins %}
+          {% widthratio recent_joins|add:recent_leaves recent_joins 100 %}%
+        {% else %}—{% endif %}
+      </div>
+      <div style="font-size:0.75rem;color:var(--ink-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Net Growth</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "bv_base.html" %}
+{% load static %}
+{% block title %}Authorize KillTracker · BlightVeil{% endblock %}
+{% block shell_class %}kt-scope bv-shell-narrow{% endblock %}
+
+{% block extra_css %}
+.kt-scope{ --accent:#ff3b3b; --accent-light:rgba(255,59,59,.10); --accent-hover:#ff5c5c; }
+[data-theme="dark"] .kt-scope{ --accent-light:rgba(255,59,59,.16); --accent-hover:#ff6b6b; }
+.kt-code{ font-family:var(--font-mono); font-size:1.4rem; letter-spacing:.3em; color:var(--accent); padding:10px 0; }
+.kt-center{ text-align:center; }
+{% endblock %}
+
+{% block content %}
+<div class="bv-wordmark">
+  <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+  <span class="bv-wm-name">BlightVeil</span>
+  <span class="bv-wm-sep">›</span>
+  <span class="bv-wm-page">Authorize KillTracker</span>
+</div>
+
+<div class="bv-card">
+  <div class="bv-card-body kt-center">
+    {% if state == "ready" %}
+      <p>Authorize the KillTracker desktop app on this device for your account?</p>
+      <div class="kt-code">{{ code }}</div>
+      <p class="bv-subtitle">Signed in as <strong>{{ request.user }}</strong>. Only approve a code you started yourself.</p>
+      <form method="post" style="margin-top:18px">
+        {% csrf_token %}
+        <input type="hidden" name="code" value="{{ code }}">
+        <button type="submit" class="bv-btn bv-btn-primary bv-btn-lg">Approve this device</button>
+      </form>
+      <p class="bv-subtitle" style="margin-top:14px">
+        Not you? <a href="{% url 'unifieduser:logout' %}?next={{ request.get_full_path|urlencode }}">Sign in with a different account</a>
+      </p>
+
+    {% elif state == "done" %}
+      <span class="bv-dot bv-dot-success"></span>
+      <h2 style="margin:10px 0">Device approved</h2>
+      <p class="bv-subtitle">You can close this tab and return to the KillTracker app — it will finish signing in automatically.</p>
+
+    {% elif state == "no_access" %}
+      <span class="bv-dot bv-dot-danger"></span>
+      <h2 style="margin:10px 0">No tracker access</h2>
+      <p class="bv-subtitle">Your account doesn't currently have KillTracker access. This is granted by your BlightVeil Discord role — check with an admin if you believe this is a mistake.</p>
+      <p class="bv-subtitle" style="margin-top:14px">
+        Signed in as <strong>{{ request.user }}</strong> — wrong account?
+        <a href="{% url 'unifieduser:logout' %}?next={{ request.get_full_path|urlencode }}">Sign in with a different account</a>
+      </p>
+
+    {% elif state == "expired" %}
+      <h2 style="margin:10px 0">Code expired</h2>
+      <p class="bv-subtitle">This login request timed out. Start the KillTracker app again to get a fresh code.</p>
+
+    {% else %}
+      <h2 style="margin:10px 0">Invalid code</h2>
+      <p class="bv-subtitle">That login code wasn't recognized. Start the KillTracker app again to get a new one.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "quartermaster/_base.html" %}
+{% block title %}Craft Guide{% endblock %}
+{% block wm_page %}Loot — Craft Guide{% endblock %}
+{% block subtitle %}Crafting requirements and current material availability{% endblock %}
+
+{% block content %}
+<style>
+.cg-back{margin-bottom:20px;}
+.cg-back a{font-size:0.82rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;transition:all 0.15s;}
+.cg-back a:hover{background:var(--accent-light);}
+
+.cg-section-label{font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle);margin:28px 0 12px;display:flex;align-items:center;gap:10px;}
+.cg-section-label::after{content:"";flex:1;height:1px;background:var(--border);}
+
+.bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+
+.bp-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.bp-card-head{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.bp-name{font-weight:700;font-size:0.95rem;}
+.bp-name a{color:var(--ink);text-decoration:none;}
+.bp-name a:hover{color:var(--accent);}
+.bp-badges{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.type-pill{font-family:'Space Mono',monospace;font-size:0.62rem;padding:2px 7px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:700;}
+.craft-badge{font-size:0.72rem;padding:3px 10px;border-radius:10px;font-weight:700;}
+.craft-badge.ok{background:#dcfce7;color:#16a34a;}
+.craft-badge.no{background:#fee2e2;color:#dc2626;}
+.craft-badge.empty{background:var(--surface);color:var(--ink-subtle);}
+[data-theme="dark"] .craft-badge.ok{background:#14532d;color:#4ade80;}
+[data-theme="dark"] .craft-badge.no{background:#450a0a;color:#f87171;}
+
+.mat-table{width:100%;border-collapse:collapse;}
+.mat-table th{font-size:0.67rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-subtle);padding:5px 14px;text-align:left;border-bottom:1px solid var(--border);}
+.mat-table td{padding:7px 14px;font-size:0.81rem;border-bottom:1px solid var(--border);}
+.mat-table tr:last-child td{border-bottom:none;}
+.mat-name{font-weight:500;}
+.mat-sup{font-size:0.65rem;color:var(--accent);vertical-align:super;}
+.temp-chip{font-family:'Space Mono',monospace;font-size:0.7rem;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;}
+.qty-chip{font-family:'Space Mono',monospace;font-size:0.72rem;}
+.qty-have{color:var(--green);}
+.qty-need{color:var(--ink-muted);}
+.qty-low{color:var(--red);}
+[data-theme="dark"] .qty-have{color:#4ade80;}
+[data-theme="dark"] .qty-low{color:#f87171;}
+.mat-row-ok td{background:rgba(22,163,74,0.04);}
+.mat-row-no td{background:rgba(220,38,38,0.04);}
+
+.constraint-note{padding:5px 14px;font-size:0.73rem;color:var(--ink-muted);font-style:italic;border-top:1px solid var(--border);}
+.bp-notes{padding:7px 14px;font-size:0.77rem;color:var(--ink-muted);border-top:1px solid var(--border);}
+
+.cg-empty{padding:40px 20px;text-align:center;color:var(--ink-muted);font-size:0.9rem;background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);}
+</style>
+
+<div class="cg-back"><a href="{% url 'quartermaster:overview' %}">← Back to Overview</a></div>
+
+{% if grouped %}
+  {% for type_label, blueprints in grouped.items %}
+  <div class="cg-section-label">{{ type_label }}</div>
+  <div class="bp-grid">
+    {% for bp in blueprints %}
+    <div class="bp-card">
+      <div class="bp-card-head">
+        <div class="bp-name">
+          <a href="{% url 'quartermaster:item_detail' bp.stock_item.slug %}">{{ bp.stock_item.name }}</a>
+        </div>
+        <div class="bp-badges">
+          <span class="type-pill">{{ bp.get_item_type_display }}</span>
+          {% if not bp.mat_list %}
+            <span class="craft-badge empty">No materials</span>
+          {% elif bp.can_craft %}
+            <span class="craft-badge ok">✅ Can Craft</span>
+          {% else %}
+            <span class="craft-badge no">❌ Missing Materials</span>
+          {% endif %}
+        </div>
+      </div>
+      <table class="mat-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Temp</th>
+            <th>Have</th>
+            <th>Need</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mat in bp.mat_list %}
+          <tr class="{% if mat.ok %}mat-row-ok{% else %}mat-row-no{% endif %}">
+            <td class="mat-name">
+              {{ mat.material_name }}
+              {% if mat.constraint_group %}<sup class="mat-sup">{{ mat.constraint_group }}</sup>{% endif %}
+            </td>
+            <td><span class="temp-chip">{{ mat.temp_display }}</span></td>
+            <td>
+              <span class="qty-chip {% if mat.ok %}qty-have{% else %}qty-low{% endif %}">
+                {{ mat.have|floatformat:3 }}
+              </span>
+            </td>
+            <td><span class="qty-chip qty-need">{{ mat.yield_display }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="color:var(--ink-subtle);padding:8px 14px;font-size:0.8rem;">No materials defined.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% for c in bp.constraint_list %}
+      <div class="constraint-note">
+        <sup class="mat-sup">{{ c.group_label }}</sup>
+        {% if c.note %}{{ c.note }}{% else %}Combined total = {{ c.combined_total }}{% endif %}
+      </div>
+      {% endfor %}
+      {% if bp.notes %}<div class="bp-notes">{{ bp.notes }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="cg-empty">No craft blueprints added yet. QMs can add them via the admin panel.</div>
+{% endif %}
+{% endblock %}

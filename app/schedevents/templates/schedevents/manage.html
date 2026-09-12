@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Manage Events{% endblock %}
+
+{% block content %}
+{% include "schedevents/_shared_css.html" %}
+<style>
+  .manage-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  .manage-table th { text-align:left; padding:10px 20px; font-size:.72rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-subtle); border-bottom:1px solid var(--border); white-space:nowrap; }
+  .manage-table td { padding:11px 20px; border-bottom:1px solid var(--border); color:var(--ink); vertical-align:middle; }
+  .manage-table tr:last-child td { border-bottom:none; }
+  .manage-table tr:hover td { background:var(--accent-light); }
+
+  .filter-bar { display:flex; gap:8px; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid var(--border); align-items:center; }
+  .filter-btn { padding:5px 12px; border-radius:99px; border:1px solid var(--border); background:var(--surface); font-size:.78rem; font-weight:600; color:var(--ink-muted); cursor:pointer; text-decoration:none; transition:all .15s; }
+  .filter-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .filter-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-subtle); }
+
+  .event-title-cell { font-weight:600; color:var(--ink); text-decoration:none; }
+  .event-title-cell:hover { color:var(--accent); }
+  .codename-sub { font-size:.75rem; color:var(--ink-subtle); margin-top:2px; }
+
+  .action-btns { display:flex; gap:6px; flex-wrap:nowrap; }
+</style>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell-wide">
+  <a href="{% url 'unifieduser:index' %}" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Events</span>
+  </a>
+  <div class="breadcrumb">
+    <a href="{% url 'unifieduser:index' %}">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'schedevents:dashboard' %}">Events</a><span class="breadcrumb-sep">›</span>
+    <span>Manage</span>
+  </div>
+
+  {% if messages %}
+  <ul class="messages">{% for msg in messages %}<li class="{{ msg.tags }}">{{ msg }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="dot"></span>
+      <h2>Event Management</h2>
+      <div class="ms-auto" style="display:flex;gap:8px;">
+        {% if can_create %}
+          <a href="{% url 'schedevents:event_create' %}" class="btn btn-primary btn-sm">+ New Event</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Status:</span>
+      <a href="?status=" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+      <a href="?status=DRAFT" class="filter-btn {% if status_filter == 'DRAFT' %}active{% endif %}">Draft</a>
+      <a href="?status=PUBLISHED" class="filter-btn {% if status_filter == 'PUBLISHED' %}active{% endif %}">Published</a>
+      <a href="?status=ACTIVE" class="filter-btn {% if status_filter == 'ACTIVE' %}active{% endif %}">● Live</a>
+      <a href="?status=COMPLETED" class="filter-btn {% if status_filter == 'COMPLETED' %}active{% endif %}">Completed</a>
+      <a href="?status=CANCELLED" class="filter-btn {% if status_filter == 'CANCELLED' %}active{% endif %}">Cancelled</a>
+    </div>
+
+    {% if events %}
+    <div style="overflow-x:auto;">
+      <table class="manage-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>RSVPs</th>
+            <th>Creator</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for plan in events %}
+          <tr>
+            <td>
+              <a href="{% url 'schedevents:event_detail' plan.codename_id %}" class="event-title-cell">{{ plan.title }}</a>
+              <div class="codename-sub">{{ plan.codename_id }}</div>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:.8rem;color:var(--ink-muted);">
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ plan.indicator.color_hex }};flex-shrink:0;"></span>
+                {{ plan.indicator.name }}
+              </span>
+            </td>
+            <td style="white-space:nowrap;color:var(--ink-muted);font-size:.85rem;">
+              <span data-ts="{{ plan.planned_start_at.timestamp|floatformat:0 }}">{{ plan.planned_start_at|date:"N j, Y" }} at {{ plan.planned_start_at|time:"g:i A" }} {{ plan.timezone_name }}</span>
+            </td>
+            <td>
+              {% if plan.status == 'DRAFT' %}<span class="badge badge-draft">Draft</span>
+              {% elif plan.status == 'PUBLISHED' %}<span class="badge badge-published">Published</span>
+              {% elif plan.status == 'ACTIVE' %}<span class="badge badge-active">● Live</span>
+              {% elif plan.status == 'COMPLETED' %}<span class="badge badge-completed">Completed</span>
+              {% elif plan.status == 'CANCELLED' %}<span class="badge badge-cancelled">Cancelled</span>{% endif %}
+            </td>
+            <td style="font-size:.85rem;color:var(--ink-muted);">
+              <span title="Going">✅ {{ plan.rsvp_set.filter_going }}</span>
+              {% if plan.capacity %}<span style="color:var(--ink-subtle);"> / {{ plan.capacity }}</span>{% endif %}
+            </td>
+            <td style="font-size:.82rem;color:var(--ink-muted);">
+              {% if plan.created_by %}{{ plan.created_by.display_name }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <div class="action-btns">
+                <a href="{% url 'schedevents:event_detail' plan.codename_id %}" class="btn btn-ghost btn-sm">View</a>
+                {% if plan.status not in 'COMPLETED CANCELLED' %}
+                  <a href="{% url 'schedevents:event_edit' plan.codename_id %}" class="btn btn-ghost btn-sm">Edit</a>
+                  {% if plan.status == 'DRAFT' %}
+                  <form method="post" action="{% url 'schedevents:event_publish' plan.codename_id %}" style="display:inline;">
+                    {% csrf_token %}<button type="submit" class="btn btn-primary btn-sm">Publish</button>
+                  </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'schedevents:event_cancel' plan.codename_id %}" style="display:inline;"
+                        onsubmit="return confirm('Cancel {{ plan.title }}?')">
+                    {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-hint">No events found{% if status_filter %} with status "{{ status_filter }}"{% endif %}.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+});
+</script>
+{% endblock %}

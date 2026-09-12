@@ -1,0 +1,151 @@
+{% extends "analytics/base.html" %}
+{% block title %}Member Activity{% endblock %}
+{% block nav_members %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>👥 Member Activity</h1>
+  <p>Attendance rates, voice engagement, and inactive member tracking.</p>
+  <span class="period-badge">📅 {{ period_label }}</span>
+</div>
+
+<div class="two-col">
+  <!-- Top attendees -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Top Event Attendees</h2>
+      <span class="count-badge">{{ top_attendees|length }}</span>
+    </div>
+    {% if top_attendees %}
+    <table class="data-table">
+      <thead><tr>
+        <th class="rank-col">#</th>
+        <th>Member</th>
+        <th>Events Attended</th>
+      </tr></thead>
+      <tbody>
+      {% for row in top_attendees %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>{{ row.user__username }}</td>
+        <td>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill green" style="width:{% widthratio row.attended top_attendees.0.attended 100 %}%"></div></div>
+            <span class="bar-val">{{ row.attended }}</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No attendance data for this period.</div>{% endif %}
+  </div>
+
+  <!-- Top voice time -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Top Voice Hours</h2>
+      <span class="count-badge">{{ top_voice_rows|length }}</span>
+    </div>
+    {% if top_voice_rows %}
+    <table class="data-table">
+      <thead><tr>
+        <th class="rank-col">#</th>
+        <th>Member</th>
+        <th>Hours</th>
+        <th>Talking%</th>
+      </tr></thead>
+      <tbody>
+      {% for row in top_voice_rows %}
+      <tr>
+        <td class="rank-col">{{ forloop.counter }}</td>
+        <td>{{ row.display_name }}</td>
+        <td>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill" style="width:{% if top_voice_rows %}{% widthratio row.total_hours top_voice_rows.0.total_hours 100 %}{% else %}0{% endif %}%"></div></div>
+            <span class="bar-val">{{ row.total_hours }}h</span>
+          </div>
+        </td>
+        <td>
+          {% if row.talking_pct >= 60 %}
+            <span class="pill pill-green">{{ row.talking_pct }}%</span>
+          {% elif row.talking_pct >= 30 %}
+            <span class="pill pill-amber">{{ row.talking_pct }}%</span>
+          {% else %}
+            <span class="pill pill-gray">{{ row.talking_pct }}%</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No voice activity data for this period.</div>{% endif %}
+  </div>
+</div>
+
+<!-- RSVP show rate table -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>RSVP Show Rate (Members with ≥ 2 RSVPs)</h2>
+    <span class="count-badge">{{ rsvp_rows|length }}</span>
+  </div>
+  {% if rsvp_rows %}
+  <table class="data-table">
+    <thead><tr>
+      <th>Member</th>
+      <th>RSVPd</th>
+      <th>Present</th>
+      <th>Late</th>
+      <th>Absent</th>
+      <th>Show Rate</th>
+    </tr></thead>
+    <tbody>
+    {% for row in rsvp_rows %}
+    <tr>
+      <td>{{ row.user__username }}</td>
+      <td>{{ row.total_rsvp }}</td>
+      <td><span class="pill pill-green">{{ row.attended }}</span></td>
+      <td><span class="pill pill-amber">{{ row.late }}</span></td>
+      <td><span class="pill pill-red">{{ row.absent }}</span></td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track">
+            <div class="bar-fill {% if row.show_rate >= 80 %}green{% elif row.show_rate >= 50 %}amber{% else %}red{% endif %}"
+                 style="width:{{ row.show_rate }}%"></div>
+          </div>
+          <span class="bar-val">{{ row.show_rate }}%</span>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No RSVP data for this period.</div>{% endif %}
+</div>
+
+<!-- Inactive members -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>⚠️ No Event Attendance (Last 30 Days)</h2>
+    <span class="count-badge">{{ inactive_members|length }}</span>
+  </div>
+  {% if inactive_members %}
+  <table class="data-table">
+    <thead><tr>
+      <th>Member</th>
+      <th>Rank</th>
+      <th>First Event</th>
+    </tr></thead>
+    <tbody>
+    {% for member in inactive_members %}
+    <tr>
+      <td>{{ member.display_name }}</td>
+      <td>{% if member.rank %}{{ member.rank.prefix }} {{ member.rank.name }}{% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}</td>
+      <td>{% if member.first_event_at %}{{ member.first_event_at|date:"Y-m-d" }}{% else %}<span style="color:var(--ink-subtle)">Never</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">All members with event history attended at least one event this period. 🎉</div>{% endif %}
+</div>
+{% endblock %}

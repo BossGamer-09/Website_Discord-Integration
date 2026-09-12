@@ -1,0 +1,91 @@
+{% extends "bv_base.html" %}
+{% load static %}
+
+{% block title %}Org Roster – BlightVeil{% endblock %}
+
+{% block extra_css %}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center;}
+.toolbar input,.toolbar select{font-size:.85rem;padding:8px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card-bg);color:var(--ink);outline:none;transition:border-color .15s;}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--accent);}
+.toolbar input{width:210px;}
+.toolbar input.inp-tz{width:170px;}
+.clear-link{font-size:.8rem;color:var(--ink-muted);text-decoration:none;padding:6px 4px;}
+.clear-link:hover{color:var(--accent);}
+.member-name{font-family:var(--font-display);font-weight:700;font-size:.95rem;}
+.member-nick{font-family:var(--font-mono);font-size:.71rem;color:var(--ink-muted);margin-top:1px;}
+.tz{font-family:var(--font-mono);font-size:.74rem;color:var(--ink-muted);}
+.count{color:var(--ink-subtle);font-size:.82rem;margin-bottom:12px;}
+.tbl-link{color:var(--accent);text-decoration:none;font-weight:500;font-size:.82rem;}
+.tbl-link:hover{text-decoration:underline;}
+.rank-none{color:var(--ink-subtle);}
+{% endblock %}
+
+{% block content %}
+
+<a href="/user/index/" class="bv-back">← Back to Portal</a>
+
+<div class="bv-wordmark">
+  <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+  <span class="bv-wm-name">BlightVeil</span>
+  <span class="bv-wm-sep">›</span>
+  <span class="bv-wm-page">Org Roster</span>
+</div>
+<p class="bv-subtitle">Active members — up to 200 shown</p>
+
+<form method="get" class="toolbar">
+  <label for="roster-search" class="sr-only">Search members</label>
+  <input id="roster-search" name="q" value="{{ search }}" placeholder="Search by name…" autocomplete="off">
+  <label for="roster-rank" class="sr-only">Filter by rank</label>
+  <select id="roster-rank" name="rank" title="Filter by rank">
+    <option value="">All ranks</option>
+    {% for r in ranks %}
+      <option value="{{ r.name }}" {% if rank_filter == r.name %}selected{% endif %}>{{ r.name }}</option>
+    {% endfor %}
+  </select>
+  <label for="roster-tz" class="sr-only">Filter by timezone</label>
+  <input id="roster-tz" class="inp-tz" name="tz" value="{{ tz_filter }}" placeholder="Timezone (e.g. America)…" autocomplete="off">
+  <button class="bv-btn bv-btn-primary" type="submit">Filter</button>
+  {% if search or rank_filter or tz_filter %}<a href="{% url 'org:roster' %}" class="clear-link">✕ Clear</a>{% endif %}
+</form>
+
+<div class="count">{{ members|length }} member{{ members|length|pluralize }}</div>
+
+<div class="bv-card">
+  {% if members %}
+  <div class="bv-table-overflow">
+    <table class="bv-table">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Rank</th>
+          <th>Timezone</th>
+          <th class="sr-only">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td>
+            <span class="member-name">{{ m.display_name }}</span>
+            {% if m.nick %}<div class="member-nick">{{ m.nick }}</div>{% endif %}
+          </td>
+          <td>
+            {% if m.rank %}
+              <span class="bv-badge bv-badge-accent">{{ m.rank.name }}</span>
+            {% else %}
+              <span class="rank-none">—</span>
+            {% endif %}
+          </td>
+          <td><span class="tz">{{ m.timezone_str|default:"—" }}</span></td>
+          <td><a class="tbl-link" href="{% url 'org:roster_member' m.pk %}">View →</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="bv-empty">No members found.</div>
+  {% endif %}
+</div>
+
+{% endblock %}

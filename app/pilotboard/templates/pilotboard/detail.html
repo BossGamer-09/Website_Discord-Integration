@@ -1,0 +1,559 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ pilot.name }} – BlightVeil Pilots</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="icon" type="image/x-icon" href="{% static "favicon.ico" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script data-cfasync="false">(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#7c3aed;--accent-light:#f3eeff;--accent-hover:#6d28d9;--green:#16a34a;--red:#dc2626;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,.06),0 4px 24px rgba(0,0,0,.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#a78bfa;--accent-light:#1e1535;--accent-hover:#c4b5fd;--green:#4ade80;--shadow:0 1px 4px rgba(0,0,0,.4),0 4px 24px rgba(0,0,0,.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.page-shell{max-width:760px;margin:0 auto;padding:48px 24px 80px;}
+.page-wordmark{margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.bv-logo-img{height:36px;width:36px;object-fit:contain;border-radius:8px;flex-shrink:0;}
+.bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);}
+.bv-wm-sep{color:var(--ink-subtle);font-size:1rem;font-weight:300;}
+.bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1.0rem;color:var(--accent);}
+.bv-wm-back{color:var(--ink-muted);text-decoration:none;font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--ink-muted);text-decoration:none;margin-bottom:24px;transition:color .15s;}
+.back-link:hover{color:var(--accent);}
+.section-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;overflow:hidden;animation:fadeUp .3s ease both;}
+.section-card:nth-child(2){animation-delay:.04s;}.section-card:nth-child(3){animation-delay:.08s;}.section-card:nth-child(4){animation-delay:.12s;}.section-card:nth-child(5){animation-delay:.16s;}.section-card:nth-child(6){animation-delay:.20s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.card-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.card-header h2{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin:0;flex:1;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.card-body{padding:20px 22px;}
+/* Name */
+.pilot-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pilot-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.03em;color:var(--ink);margin:0;}
+.btn-edit-name{font-size:.78rem;color:var(--ink-subtle);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .15s,background .15s;}
+.btn-edit-name:hover{color:var(--accent);background:var(--accent-light);}
+.name-edit-row{display:none;align-items:center;gap:8px;flex-wrap:wrap;}
+.name-input{font-family:'Syne',sans-serif;font-weight:700;font-size:1.3rem;padding:4px 10px;border-radius:6px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);outline:none;flex:1;min-width:0;}
+.updated-by{font-size:.75rem;color:var(--ink-subtle);margin-top:6px;}
+.inactive-badge{font-size:.68rem;padding:2px 8px;border-radius:99px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);}
+/* Skills */
+.skill-row{display:flex;align-items:center;gap:8px;padding:6px 0;}
+.skill-label{font-size:.85rem;color:var(--ink-muted);min-width:110px;}
+.skulls{display:flex;gap:4px;}
+.skull-btn{background:none;border:none;cursor:pointer;padding:0;font-size:1.6rem;line-height:1;transition:transform .12s,opacity .12s;opacity:.22;}
+.skull-btn.filled{opacity:1;color:var(--accent);}
+.skull-btn:hover{transform:scale(1.18);opacity:.5;}
+.skull-btn.filled:hover{opacity:1;}
+/* Skull key */
+.skull-key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.skull-key-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--ink-muted);}
+.skull-key-pip{font-size:.9rem;color:var(--accent);line-height:1;}
+.skull-key-num{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--ink-subtle);}
+/* Tags */
+.tags-active{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;min-height:28px;}
+.tag-badge{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:4px 11px;font-size:.75rem;font-weight:500;border:1px solid;cursor:pointer;transition:opacity .15s;}
+.tag-badge:hover{opacity:.75;}
+.tag-available{display:flex;flex-wrap:wrap;gap:7px;}
+.tag-add-btn{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:4px 11px;font-size:.75rem;color:var(--ink-subtle);border:1px dashed var(--border);background:none;cursor:pointer;transition:all .15s;}
+.tag-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* Notes */
+.notes-textarea{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:.88rem;line-height:1.6;resize:vertical;outline:none;transition:border-color .15s;min-height:100px;}
+.notes-textarea:focus{border-color:var(--accent);}
+.notes-footer{display:flex;align-items:center;margin-top:8px;font-size:.75rem;color:var(--ink-subtle);}
+.ms-auto{margin-left:auto;}
+.notes-actions{display:flex;align-items:center;gap:8px;}
+.notes-saved-msg{font-size:.75rem;color:var(--green);display:none;}
+.notes-saved-msg--visible{display:inline!important;}
+.notes-save-btn{display:none!important;}
+.notes-save-btn--visible{display:inline-flex!important;}
+.note-flex{flex:1;}
+.readonly-dim{opacity:.7;}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.83rem;cursor:pointer;text-decoration:none;border:none;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:var(--accent-hover);}
+.btn-ghost{background:transparent;color:var(--ink-muted);border:1px solid var(--border);}.btn-ghost:hover{background:var(--accent-light);color:var(--ink);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid transparent;padding:4px 8px;}.btn-danger:hover{background:#fee2e2;}
+[data-theme="dark"] .btn-danger:hover{background:#3b0a0a;}
+.btn-sm{padding:4px 12px;font-size:.78rem;}
+/* Goals */
+.goal-item{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.goal-row{display:flex;align-items:center;gap:10px;padding:12px 14px;}
+.goal-check{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;font-size:.7rem;color:#fff;-webkit-user-select:none;user-select:none;}
+.goal-check.done{background:var(--accent);border-color:var(--accent);}
+.goal-title{flex:1;font-size:.9rem;}
+.goal-title.done{text-decoration:line-through;color:var(--ink-subtle);}
+.btn-notes-toggle{font-size:.75rem;color:var(--ink-subtle);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .15s;white-space:nowrap;}
+.btn-notes-toggle:hover{color:var(--accent);}
+.goal-notes-panel{border-top:1px solid var(--border);padding:10px 14px 14px;background:var(--surface);display:none;}
+.note-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.note-item:last-of-type{border-bottom:none;}
+.note-author{font-size:.72rem;font-weight:600;color:var(--accent);}
+.note-date{font-size:.7rem;color:var(--ink-subtle);margin-left:6px;}
+.note-content{font-size:.83rem;color:var(--ink);margin-top:1px;}
+.note-del{background:none;border:none;cursor:pointer;color:var(--ink-subtle);font-size:.7rem;padding:2px;line-height:1;opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.note-item:hover .note-del{opacity:1;}
+.note-add-row{display:flex;gap:8px;margin-top:10px;}
+.note-input{flex:1;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg);color:var(--ink);font-size:.82rem;outline:none;transition:border-color .15s;}
+.note-input:focus{border-color:var(--accent);}
+.goal-add-row{display:flex;gap:8px;margin-top:4px;}
+.goal-input{flex:1;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .15s;}
+.goal-input:focus{border-color:var(--accent);}
+.hint{font-size:.75rem;color:var(--ink-subtle);margin:0 0 8px;}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#f8fafc;padding:10px 18px;border-radius:8px;font-size:.83rem;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+{% csrf_token %}
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell">
+
+  <a href="{% url 'pilotboard:dashboard' %}" class="back-link">← Pilot Roster</a>
+
+  <div class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <a href="{% url 'pilotboard:dashboard' %}" class="bv-wm-back">Pilots</a>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page" id="breadcrumbName">{{ pilot.name }}</span>
+  </div>
+
+  <!-- ── Name ── -->
+  <div class="section-card">
+    <div class="card-body">
+      <div class="pilot-name-row" id="nameDisplay">
+        <h1 class="pilot-name" id="pilotNameText">{{ pilot.name }}</h1>
+        {% if not pilot.is_active %}<span class="inactive-badge" id="inactiveBadge">Inactive</span>{% endif %}
+        {% if can_manage %}<button type="button" class="btn-edit-name" onclick="startEditName()">Edit</button>{% endif %}
+        {% if can_manage %}<button type="button" class="btn btn-ghost btn-sm" id="activeToggleBtn" onclick="toggleActive()">{% if pilot.is_active %}Mark Inactive{% else %}Mark Active{% endif %}</button>{% endif %}
+      </div>
+      <div class="name-edit-row" id="nameEdit">
+        <input class="name-input" id="nameInput" type="text" value="{{ pilot.name }}">
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveName()">Save</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cancelEditName()">Cancel</button>
+      </div>
+      <p class="updated-by" id="updatedBy">{% if pilot.updated_by %}Last updated by {{ pilot.updated_by.display_name }}{% endif %}</p>
+    </div>
+  </div>
+
+  <!-- ── Tags ── -->
+  <div class="section-card">
+    <div class="card-header"><span class="dot"></span><h2>Tags</h2></div>
+    <div class="card-body">
+      <div class="tags-active" id="tagsActive"></div>
+    </div>
+  </div>
+
+  <!-- ── Skills ── -->
+  <div class="section-card">
+    <div class="card-header"><span class="dot"></span><h2>Skills</h2></div>
+    <div class="card-body">
+      {% for skill_key, skill_label, current_val in skills %}
+      <div class="skill-row">
+        <span class="skill-label">{{ skill_label }}</span>
+        <div class="skulls" data-skill="{{ skill_key }}">
+          {% for i in "12345" %}
+          <button type="button" class="skull-btn {% if forloop.counter <= current_val %}filled{% endif %}"
+            data-val="{{ forloop.counter }}"
+            {% if can_manage %}onclick="rateSkill('{{ skill_key }}', {{ forloop.counter }})"{% else %}style="cursor:default;pointer-events:none;"{% endif %}>☠</button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="skull-key">
+        <div class="skull-key-item"><span class="skull-key-pip">☠</span><span class="skull-key-num">1</span>Below Standard</div>
+        <div class="skull-key-item"><span class="skull-key-pip">☠☠</span><span class="skull-key-num">2</span>Legion Standard</div>
+        <div class="skull-key-item"><span class="skull-key-pip">☠☠☠</span><span class="skull-key-num">3</span>Knight Standard</div>
+        <div class="skull-key-item"><span class="skull-key-pip">☠☠☠☠</span><span class="skull-key-num">4</span>Above Standard</div>
+        <div class="skull-key-item"><span class="skull-key-pip">☠☠☠☠☠</span><span class="skull-key-num">5</span>Top 50 in the game</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Notes ── -->
+  <div class="section-card">
+    <div class="card-header"><span class="dot"></span><h2>General Notes</h2></div>
+    <div class="card-body">
+      <textarea class="notes-textarea{% if not can_manage %} readonly-dim{% endif %}" id="notesArea"
+        {% if not can_manage %}readonly{% endif %}
+        placeholder="Add general notes about this pilot…">{{ pilot.notes }}</textarea>
+      <div class="notes-footer">
+        <span id="notesTimestamp">{% if pilot.notes_updated_at %}Last saved {{ pilot.notes_updated_at|date:"M j, Y g:i A" }}{% endif %}</span>
+        {% if can_manage %}
+        <div class="ms-auto notes-actions">
+          <span id="notesSavedMsg" class="notes-saved-msg">✓ Saved</span>
+          <button type="button" class="btn btn-primary btn-sm notes-save-btn" id="saveNotesBtn" onclick="saveNotes()">Save notes</button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Goals ── -->
+  <div class="section-card">
+    <div class="card-header"><span class="dot"></span><h2>Goals</h2></div>
+    <div class="card-body">
+      <div id="goalsList">
+        {% for goal in goals %}
+        <div class="goal-item" id="goal-{{ goal.pk }}" data-completed="{{ goal.completed|yesno:'true,false' }}">
+          <div class="goal-row">
+            <div class="goal-check {% if goal.completed %}done{% endif %}"
+              {% if can_interact_goals %}onclick="toggleGoal({{ goal.pk }})"{% else %}style="cursor:default;"{% endif %}>
+              {% if goal.completed %}✓{% endif %}
+            </div>
+            <span class="goal-title {% if goal.completed %}done{% endif %}">{{ goal.title }}</span>
+            <button type="button" class="btn-notes-toggle" onclick="toggleGoalNotes({{ goal.pk }})">Notes</button>
+            {% if can_manage %}<button type="button" class="btn btn-danger btn-sm" onclick="deleteGoal({{ goal.pk }})">✕</button>{% endif %}
+          </div>
+          <div class="goal-notes-panel" id="notes-panel-{{ goal.pk }}">
+            <div id="notes-list-{{ goal.pk }}">
+              {% for note in goal.notes.all %}
+              <div class="note-item" id="note-{{ note.pk }}">
+                <div class="note-flex">
+                  <div>
+                    <span class="note-author">{{ note.author.display_name|default:"Unknown" }}</span>
+                    <span class="note-date">{{ note.created_at|date:"M j, Y" }}</span>
+                  </div>
+                  <div class="note-content">{{ note.content }}</div>
+                </div>
+                {% if can_interact_goals %}
+                <button type="button" class="note-del" onclick="deleteGoalNote({{ goal.pk }}, {{ note.pk }})">✕</button>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% if can_interact_goals %}
+            <div class="note-add-row">
+              <input class="note-input" id="note-input-{{ goal.pk }}" placeholder="Add a note…"
+                onkeydown="if(event.key==='Enter') addGoalNote({{ goal.pk }})">
+              <button type="button" class="btn btn-primary btn-sm" onclick="addGoalNote({{ goal.pk }})">Add</button>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="hint" id="noGoalsMsg">No goals yet.</p>
+        {% endfor %}
+      </div>
+
+      {% if can_manage %}
+      <div id="addGoalSection">
+        <p class="hint" id="addGoalBlocked" {% if not pilot.open_goal %}style="display:none"{% endif %}>Complete the current goal before adding a new one.</p>
+        <div class="goal-add-row" id="addGoalForm" {% if pilot.open_goal %}style="display:none"{% endif %}>
+          <input class="goal-input" id="newGoalInput" placeholder="Add a new goal…"
+            onkeydown="if(event.key==='Enter') addGoal()">
+          <button type="button" class="btn btn-primary" onclick="addGoal()">Add</button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /page-shell -->
+
+<div class="toast" id="toast"></div>
+
+{{ group_filters_data|json_script:"pb-group-filters" }}
+{{ pilot_group_ids_data|json_script:"pb-pilot-group-ids" }}
+
+<script data-cfasync="false">
+const CSRF             = document.querySelector('[name=csrfmiddlewaretoken]').value;
+const BASE             = "{% url 'pilotboard:detail' pilot.slug %}";
+const CAN_MANAGE       = {{ can_manage|yesno:"true,false" }};
+const CAN_INTERACT_GOALS = {{ can_interact_goals|yesno:"true,false" }};
+const HAS_ORG_PLAYER   = {{ has_org_player|yesno:"true,false" }};
+
+const GROUP_FILTERS    = JSON.parse(document.getElementById('pb-group-filters').textContent);
+let PILOT_GROUP_IDS    = JSON.parse(document.getElementById('pb-pilot-group-ids').textContent);
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg, ok=true){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = ok ? '#1e293b' : '#7f1d1d';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+async function api(url, body){
+  try {
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body: JSON.stringify(body),
+    });
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return {ok:false, error:`Server error ${r.status}`};
+    return await r.json();
+  } catch(e) {
+    return {ok:false, error:'Network error'};
+  }
+}
+
+// ── Name ───────────────────────────────────────────────────────────────────
+function startEditName(){
+  document.getElementById('nameDisplay').style.display = 'none';
+  document.getElementById('nameEdit').style.display = 'flex';
+  document.getElementById('nameInput').focus();
+}
+function cancelEditName(){
+  document.getElementById('nameEdit').style.display = 'none';
+  document.getElementById('nameDisplay').style.display = 'flex';
+}
+async function saveName(){
+  const val = document.getElementById('nameInput').value.trim();
+  if (!val) return;
+  const d = await api(BASE+'rename/', {name:val});
+  if (d.ok){
+    // Slug may have changed — navigate to new URL so all subsequent AJAX uses the correct base
+    if (d.slug && !BASE.endsWith('/'+d.slug+'/')) {
+      window.location.href = window.location.pathname.replace(/\/[^/]+\/$/, '/'+d.slug+'/');
+    } else {
+      document.getElementById('pilotNameText').textContent  = d.name;
+      document.getElementById('breadcrumbName').textContent = d.name;
+      document.getElementById('nameInput').value = d.name;
+      cancelEditName();
+      toast('Name saved');
+    }
+  } else { toast(d.error||'Error', false); }
+}
+document.getElementById('nameInput')?.addEventListener('keydown', e => {
+  if (e.key==='Enter')  saveName();
+  if (e.key==='Escape') cancelEditName();
+});
+
+// ── Active / Inactive ──────────────────────────────────────────────────────
+async function toggleActive(){
+  const d = await api(BASE+'active/', {});
+  if (d.ok){
+    const btn   = document.getElementById('activeToggleBtn');
+    const badge = document.getElementById('inactiveBadge');
+    if (d.is_active){
+      btn.textContent = 'Mark Inactive';
+      if (badge) badge.remove();
+    } else {
+      btn.textContent = 'Mark Active';
+      if (!document.getElementById('inactiveBadge')){
+        const b = document.createElement('span');
+        b.className = 'inactive-badge';
+        b.id = 'inactiveBadge';
+        b.textContent = 'Inactive';
+        document.getElementById('pilotNameText').after(b);
+      }
+    }
+    toast(d.is_active ? 'Pilot set active' : 'Pilot set inactive');
+  } else { toast(d.error||'Error', false); }
+}
+
+// ── Skills ─────────────────────────────────────────────────────────────────
+async function rateSkill(skill, value){
+  const d = await api(BASE+'skill/', {skill, value});
+  if (d.ok){
+    document.querySelectorAll(`.skulls[data-skill="${skill}"] .skull-btn`)
+      .forEach((btn,i) => btn.classList.toggle('filled', i < value));
+    toast('Rating updated');
+  } else { toast(d.error||'Error', false); }
+}
+
+// ── Group Tags ─────────────────────────────────────────────────────────────
+function renderGroupTags(){
+  const activeEl = document.getElementById('tagsActive');
+  activeEl.innerHTML = '';
+
+  const active = GROUP_FILTERS.filter(gf => PILOT_GROUP_IDS.includes(gf.id));
+  if (!active.length){
+    activeEl.innerHTML = '<span style="font-size:.78rem;color:var(--ink-subtle)">No groups assigned.</span>';
+    return;
+  }
+  active.forEach(function(gf){
+    const span = document.createElement('span');
+    span.className = 'tag-badge';
+    span.style.cssText = 'color:var(--accent);background:var(--accent-light);border-color:var(--accent);cursor:default;';
+    span.textContent = gf.label;
+    activeEl.appendChild(span);
+  });
+}
+
+// ── Notes ──────────────────────────────────────────────────────────────────
+const notesArea = document.getElementById('notesArea');
+const saveBtn   = document.getElementById('saveNotesBtn');
+const savedMsg  = document.getElementById('notesSavedMsg');
+
+if (notesArea && CAN_MANAGE){
+  let _notesDirtyRaf = null;
+  notesArea.addEventListener('input', () => {
+    if (_notesDirtyRaf) return;
+    _notesDirtyRaf = requestAnimationFrame(() => {
+      _notesDirtyRaf = null;
+      saveBtn?.classList.add('notes-save-btn--visible');
+      savedMsg?.classList.remove('notes-saved-msg--visible');
+    });
+  });
+}
+
+async function saveNotes(){
+  const d = await api(BASE+'notes/', {notes: notesArea.value});
+  if (d.ok){
+    saveBtn?.classList.remove('notes-save-btn--visible');
+    savedMsg?.classList.add('notes-saved-msg--visible');
+    document.getElementById('notesTimestamp').textContent = 'Just saved';
+    toast('Notes saved');
+  } else { toast(d.error||'Error', false); }
+}
+
+// ── Goals ──────────────────────────────────────────────────────────────────
+function hasOpenGoal(){
+  return !!document.querySelector('.goal-item[data-completed="false"]');
+}
+
+function refreshAddSection(){
+  const blocked = document.getElementById('addGoalBlocked');
+  const form    = document.getElementById('addGoalForm');
+  if (!blocked || !form) return;
+  const open = hasOpenGoal();
+  blocked.style.display = open ? '' : 'none';
+  form.style.display    = open ? 'none' : '';
+  if (!open) document.getElementById('newGoalInput')?.focus();
+}
+
+async function addGoal(){
+  const input = document.getElementById('newGoalInput');
+  const title = (input?.value||'').trim();
+  if (!title) return;
+  const d = await api(BASE+'goals/', {title});
+  if (d.ok){
+    input.value = '';
+    document.getElementById('noGoalsMsg')?.remove();
+    document.getElementById('goalsList').appendChild(buildGoalEl(d));
+    refreshAddSection();
+    toast('Goal added');
+  } else { toast(d.error||'Error', false); }
+}
+
+function buildGoalEl(g){
+  const div = document.createElement('div');
+  div.className = 'goal-item';
+  div.id = `goal-${g.id}`;
+  div.dataset.completed = 'false';
+  const deleteBtn = CAN_MANAGE ? `<button class="btn btn-danger btn-sm" onclick="deleteGoal(${g.id})">✕</button>` : '';
+  const noteAddRow = CAN_INTERACT_GOALS ? `
+      <div class="note-add-row">
+        <input class="note-input" id="note-input-${g.id}" placeholder="Add a note…"
+          onkeydown="if(event.key==='Enter') addGoalNote(${g.id})">
+        <button class="btn btn-primary btn-sm" onclick="addGoalNote(${g.id})">Add</button>
+      </div>` : '';
+  div.innerHTML = `
+    <div class="goal-row">
+      <div class="goal-check" onclick="toggleGoal(${g.id})"></div>
+      <span class="goal-title">${esc(g.title)}</span>
+      <button class="btn-notes-toggle" onclick="toggleGoalNotes(${g.id})">Notes</button>
+      ${deleteBtn}
+    </div>
+    <div class="goal-notes-panel" id="notes-panel-${g.id}">
+      <div id="notes-list-${g.id}"></div>
+      ${noteAddRow}
+    </div>`;
+  return div;
+}
+
+async function toggleGoal(id){
+  const d = await api(BASE+`goals/${id}/complete/`, {});
+  if (d.ok){
+    const item  = document.getElementById(`goal-${id}`);
+    const check = item.querySelector('.goal-check');
+    const title = item.querySelector('.goal-title');
+    item.dataset.completed    = d.completed ? 'true' : 'false';
+    check.classList.toggle('done', d.completed);
+    check.textContent = d.completed ? '✓' : '';
+    title.classList.toggle('done', d.completed);
+    refreshAddSection();
+    toast(d.completed ? 'Goal completed ✓' : 'Goal re-opened');
+  } else { toast(d.error||'Error', false); }
+}
+
+async function deleteGoal(id){
+  if (!confirm('Delete this goal?')) return;
+  const d = await api(BASE+`goals/${id}/delete/`, {});
+  if (d.ok){
+    document.getElementById(`goal-${id}`).remove();
+    if (!document.querySelector('.goal-item')){
+      document.getElementById('goalsList')
+        .insertAdjacentHTML('afterbegin','<p class="hint" id="noGoalsMsg">No goals yet.</p>');
+    }
+    refreshAddSection();
+    toast('Goal deleted');
+  } else { toast(d.error||'Error', false); }
+}
+
+function toggleGoalNotes(id){
+  const panel = document.getElementById(`notes-panel-${id}`);
+  const btn   = panel.closest('.goal-item').querySelector('.btn-notes-toggle');
+  const open  = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'Notes' : 'Hide Notes';
+}
+
+// ── Goal notes ─────────────────────────────────────────────────────────────
+async function addGoalNote(goalId){
+  const input   = document.getElementById(`note-input-${goalId}`);
+  const content = (input?.value||'').trim();
+  if (!content) return;
+  const d = await api(BASE+`goals/${goalId}/notes/`, {content});
+  if (d.ok){
+    input.value = '';
+    requestAnimationFrame(() => {
+      const noteEl = document.createElement('div');
+      noteEl.className = 'note-item';
+      noteEl.id = `note-${d.id}`;
+      noteEl.innerHTML = `
+        <div class="note-flex">
+          <div>
+            <span class="note-author">${esc(d.author)}</span>
+            <span class="note-date">Just now</span>
+          </div>
+          <div class="note-content">${esc(d.content)}</div>
+        </div>
+        <button type="button" class="note-del" onclick="deleteGoalNote(${goalId},${d.id})">✕</button>`;
+      document.getElementById(`notes-list-${goalId}`).appendChild(noteEl);
+    });
+    toast('Note added');
+  } else { toast(d.error||'Error', false); }
+}
+
+async function deleteGoalNote(goalId, noteId){
+  const d = await api(BASE+`goals/${goalId}/notes/${noteId}/delete/`, {});
+  if (d.ok){
+    document.getElementById(`note-${noteId}`)?.remove();
+    toast('Note deleted');
+  } else { toast(d.error||'Error', false); }
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+renderGroupTags();
+
+document.getElementById('themeToggle').addEventListener('click', function(){
+  var next = document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+</body>
+</html>

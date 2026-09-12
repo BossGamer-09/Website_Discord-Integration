@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Apply saved theme before paint -->
+<script>
+(function() {
+  var t = localStorage.getItem('theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+
+<style>
+  /* ── Light theme ── */
+  :root {
+    --ink: #0f1117;
+    --ink-muted: #4a4f5e;
+    --ink-subtle: #9399a8;
+    --surface: #f7f8fc;
+    --card-bg: #ffffff;
+    --border: #e4e6ef;
+    --border-focus: #2563eb;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --grid-line: rgba(0,0,0,0.055);
+    --radius: 14px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 8px 40px rgba(0,0,0,0.09);
+  }
+
+  /* ── Dark theme ── */
+  [data-theme="dark"] {
+    --ink: #e8eaf0;
+    --ink-muted: #8b91a6;
+    --ink-subtle: #555c73;
+    --surface: #0d0f14;
+    --card-bg: #161922;
+    --border: #252836;
+    --border-focus: #3b82f6;
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --danger: #f87171;
+    --grid-line: rgba(255,255,255,0.035);
+    --shadow: 0 1px 4px rgba(0,0,0,0.4), 0 8px 40px rgba(0,0,0,0.55);
+  }
+
+  /* Smooth theme transition */
+  body, .login-card, input, select, .btn-submit {
+    transition: background-color 0.22s ease, border-color 0.22s ease, color 0.18s ease, box-shadow 0.22s ease;
+  }
+
+  body {
+    background: var(--surface);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+    transition: background-image 0.22s ease;
+  }
+
+  /* ── Dark mode toggle ── */
+  .theme-toggle {
+    position: fixed;
+    top: 18px; right: 20px;
+    z-index: 999;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--ink-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: background 0.2s, border-color 0.2s, color 0.15s, transform 0.15s, box-shadow 0.2s;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--accent); transform: scale(1.08); }
+  .theme-toggle .icon-sun  { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+  /* ── Wrapper ── */
+  .login-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Wordmark ── */
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    justify-content: center;
+    text-decoration: none;
+  }
+  .bv-logo-img  { height: 32px; width: 32px; object-fit: contain; border-radius: 7px; flex-shrink: 0; }
+  .bv-wm-name   { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; letter-spacing: -0.02em; color: var(--ink); }
+  .bv-wm-sep    { color: var(--ink-subtle); font-weight: 300; }
+  .bv-wm-page   { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.95rem; color: var(--accent); }
+
+  /* ── Login card ── */
+  .login-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    padding: 36px 36px 32px;
+  }
+
+  .login-card h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.55rem;
+    letter-spacing: -0.03em;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .login-card .subtitle {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin: 0 0 28px;
+  }
+
+  /* ── Form fields ── */
+  .field { margin-bottom: 18px; }
+
+  .field label {
+    display: block;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--card-bg);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.22s, color 0.18s;
+  }
+
+  .field input::placeholder { color: var(--ink-subtle); }
+
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+
+  .field input.is-invalid,
+  .field select.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.1);
+  }
+
+  .field-help {
+    font-size: 0.78rem;
+    color: var(--ink-subtle);
+    margin-top: 5px;
+  }
+
+  .field-error {
+    font-size: 0.78rem;
+    color: var(--danger);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .field-error::before {
+    content: '!';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px; height: 14px;
+    background: var(--danger);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Custom select arrow */
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--ink-subtle);
+    pointer-events: none;
+  }
+
+  /* ── Submit button ── */
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  }
+  .btn-submit:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .btn-submit:active { transform: scale(0.99); }
+
+  /* ── Footer ── */
+  .login-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: var(--ink-subtle);
+    transition: color 0.18s ease;
+  }
+</style>
+
+<!-- Dark mode toggle -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+</button>
+
+<div class="login-wrapper">
+  <a href="{% url 'unifieduser:index' %}" class="wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Sign In</span>
+  </a>
+
+  <div class="login-card">
+    <h1>{% if form.get_user %}{% trans "Verify identity" %}{% else %}{% trans "Sign in" %}{% endif %}</h1>
+    <p class="subtitle">
+      {% if form.get_user %}
+        Enter your two-factor authentication code to continue.
+      {% else %}
+        Enter your credentials to access your account.
+      {% endif %}
+    </p>
+
+    <form action="." method="post" novalidate>
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
+
+      {% if form.username %}
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+        <input
+          type="text"
+          name="{{ form.username.html_name }}"
+          class="{% if form.username.errors %}is-invalid{% endif %}"
+          value="{{ form.username.value|default_if_none:'' }}"
+          id="{{ form.username.id_for_label }}"
+          autocomplete="username"
+          autofocus
+        >
+        {% if form.username.help_text %}<div class="field-help">{{ form.username.help_text }}</div>{% endif %}
+        {% for error in form.username.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if form.password %}
+      <div class="field">
+        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+        <input
+          type="password"
+          name="{{ form.password.html_name }}"
+          class="{% if form.password.errors %}is-invalid{% endif %}"
+          value="{{ form.password.value|default_if_none:'' }}"
+          id="{{ form.password.id_for_label }}"
+          autocomplete="current-password"
+        >
+        {% if form.password.help_text %}<div class="field-help">{{ form.password.help_text }}</div>{% endif %}
+        {% for error in form.password.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if form.get_user %}
+      <div class="field">
+        <label for="{{ form.otp_device.id_for_label }}">{% trans "2FA Device" %}</label>
+        <div class="select-wrap">
+          <select
+            class="{% if form.otp_device.errors %}is-invalid{% endif %}"
+            id="{{ form.otp_device.id_for_label }}"
+            name="{{ form.otp_device.html_name }}"
+          >
+            {% for id, name in form.fields.otp_device.choices %}
+              <option value="{{ id }}">{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if form.otp_device.help_text %}<div class="field-help">{{ form.otp_device.help_text }}</div>{% endif %}
+        {% for error in form.otp_device.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="field">
+        <label for="{{ form.otp_token.id_for_label }}">{% trans "2FA Token" %}</label>
+        <input
+          type="text"
+          name="{{ form.otp_token.html_name }}"
+          class="{% if form.otp_token.errors %}is-invalid{% endif %}"
+          value="{{ form.otp_token.value|default_if_none:'' }}"
+          id="{{ form.otp_token.id_for_label }}"
+          autocomplete="one-time-code"
+          inputmode="numeric"
+          pattern="\d*"
+          placeholder="000000"
+        >
+        {% if form.otp_token.help_text %}<div class="field-help">{{ form.otp_token.help_text }}</div>{% endif %}
+        {% for error in form.otp_token.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <button type="submit" class="btn-submit">
+        {% if form.get_user %}{% trans "Verify" %}{% else %}{% trans "Sign in" %}{% endif %}
+      </button>
+    </form>
+  </div>
+
+  <div class="login-footer">Protected by your organization's authentication system.</div>
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+
+{% endblock %}

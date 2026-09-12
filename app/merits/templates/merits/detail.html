@@ -1,0 +1,75 @@
+{% extends "merits/_base.html" %}
+{% block title %}Request #{{ obj.pk }}{% endblock %}
+{% block wm_page %}Request #{{ obj.pk }}{% endblock %}
+{% block subtitle %}{{ obj.get_kind_display }} · <span class="badge badge-{{ obj.status|lower }}">{{ obj.get_status_display }}</span>{% endblock %}
+{% block content %}
+<div class="nav-links">
+  {% if can_review %}
+  <a href="{% url 'merits:list' %}">← All Requests</a>
+  {% else %}
+  <a href="{% url 'merits:my_requests' %}">← My Requests</a>
+  {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;">
+  <div class="card" style="grid-column:1/-1;">
+    <div class="field-label">Title</div>
+    <div class="field-val" style="font-size:1.1rem;font-weight:600;">{{ obj.title }}</div>
+    <div class="field-label">Type</div>
+    <div class="field-val"><span class="badge badge-{{ obj.kind|lower }}">{{ obj.get_kind_display }}</span></div>
+    <div class="field-label">Amount</div>
+    <div class="field-val" style="font-family:'Space Mono',monospace;">
+      {% if obj.amount %}{% if obj.kind == "MONEY" %}{{ obj.amount|floatformat:0 }} aUEC{% else %}{{ obj.amount }} pts{% endif %}{% else %}TBD{% endif %}
+    </div>
+    {% if obj.rsi_handle %}
+    <div class="field-label">RSI Handle</div>
+    <div class="field-val">{{ obj.rsi_handle }}</div>
+    {% endif %}
+    <div class="field-label">Reason</div>
+    <div class="field-val" style="white-space:pre-wrap;">{{ obj.reason }}</div>
+    {% if obj.during_event is not None %}
+    <div class="field-label">During Org Event</div>
+    <div class="field-val">{% if obj.during_event %}Yes{% else %}No{% endif %}</div>
+    {% endif %}
+    {% if obj.purchase_for %}
+    <div class="field-label">Purchasing</div>
+    <div class="field-val">{{ obj.purchase_for }}</div>
+    {% endif %}
+    <div class="field-label">Submitted</div>
+    <div class="field-val" style="color:var(--ink-muted);">{{ obj.submitted_at|date:"N j, Y g:i A" }} by {{ obj.requester }}</div>
+  </div>
+
+  {% if obj.reviewer_note or obj.reviewed_by %}
+  <div class="card" style="grid-column:1/-1;">
+    <div class="field-label">Staff Review</div>
+    <div class="field-val">Reviewed by {{ obj.reviewed_by }} on {{ obj.reviewed_at|date:"N j, Y g:i A" }}</div>
+    {% if obj.reviewer_note %}
+    <div class="field-label">Note</div>
+    <div class="field-val" style="white-space:pre-wrap;">{{ obj.reviewer_note }}</div>
+    {% endif %}
+    {% if obj.fulfilled_at %}
+    <div class="field-label">Fulfilled</div>
+    <div class="field-val" style="color:var(--green);">{{ obj.fulfilled_at|date:"N j, Y g:i A" }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if obj.status == Status.PENDING and can_review %}
+<div class="card" style="max-width:500px;margin-top:20px;">
+  <div class="field-label">Process this Request</div>
+  <form method="post" action="{% url 'merits:process' obj.pk %}">
+    {% csrf_token %}
+    <label>Override Amount (leave blank to keep current)</label>
+    <input type="number" name="amount" min="0" placeholder="{{ obj.amount|default:'0' }}">
+    <label>Staff Note (optional)</label>
+    <textarea name="reviewer_note" rows="3" placeholder="Note to the requester…"></textarea>
+    <div style="display:flex;gap:10px;">
+      <button type="submit" name="action" value="fulfill" class="btn btn-success">✅ Fulfill</button>
+      <button type="submit" name="action" value="deny"    class="btn btn-danger">❌ Deny</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% endblock %}

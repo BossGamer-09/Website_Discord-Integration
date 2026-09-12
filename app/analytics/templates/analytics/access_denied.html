@@ -1,0 +1,8 @@
+{% extends "analytics/base.html" %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🔒 Access Denied</h1>
+  <p>{{ message|default:"You don't have permission to view this page." }}</p>
+</div>
+{% endblock %}

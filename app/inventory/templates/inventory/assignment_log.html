@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment Log{% if item %} – {{ item.name }}{% endif %} – Blightveil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#2563eb;--accent-light:#eff4ff;--red:#dc2626;--amber:#f59e0b;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#3b82f6;--accent-light:#1a2540;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.shell{max-width:960px;margin:0 auto;padding:48px 24px 80px;}
+.back{font-size:0.82rem;color:var(--accent);text-decoration:none;margin-bottom:20px;display:inline-block;}
+.back:hover{text-decoration:underline;}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-bottom:4px;}
+.page-sub{color:var(--ink-muted);font-size:0.85rem;margin-bottom:28px;}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;animation:fadeUp 0.3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.table{width:100%;border-collapse:collapse;}
+.table th{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-subtle);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+.table td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:0.84rem;vertical-align:middle;}
+.table tr:last-child td{border-bottom:none;}
+.badge{font-family:'Space Mono',monospace;font-size:0.7rem;padding:2px 9px;border-radius:20px;font-weight:700;}
+.badge-a{background:#dcfce7;color:#15803d;}[data-theme="dark"] .badge-a{background:#052e16;color:#4ade80;}
+.badge-r{background:#e0f2fe;color:#0369a1;}[data-theme="dark"] .badge-r{background:#0a1929;color:#38bdf8;}
+.badge-l{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .badge-l{background:#1f0a0a;color:#f87171;}
+.mono{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--ink-muted);}
+.empty{color:var(--ink-muted);font-size:0.88rem;padding:24px 16px;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="(function(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('theme',t);})()">
+  <svg class="icon-sun" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm0-14V2m0 20v-2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12H4m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+  <svg class="icon-moon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<div class="shell">
+  {% if item %}
+    <a class="back" href="{% url 'inventory:item_detail' item.pk %}">← Back to {{ item.name }}</a>
+    <div class="page-title">Assignment Log — {{ item.name }}</div>
+  {% else %}
+    <a class="back" href="{% url 'inventory:overview' %}">← Back to Inventory</a>
+    <div class="page-title">Assignment Log — All Items</div>
+  {% endif %}
+  <div class="page-sub">Most recent 200 entries</div>
+
+  <div class="card">
+    {% if log %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item</th>
+          <th>Unit #</th>
+          <th>Action</th>
+          <th>Recipient</th>
+          <th>By</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in log %}
+        <tr>
+          <td class="mono">{{ entry.actioned_at|date:"Y-m-d H:i" }}</td>
+          <td>{{ entry.unit.item.name }}</td>
+          <td class="mono">#{{ entry.unit_id }}</td>
+          <td>
+            {% if entry.action == 'ASSIGNED' %}<span class="badge badge-a">Assigned</span>
+            {% elif entry.action == 'RETURNED' %}<span class="badge badge-r">Returned</span>
+            {% else %}<span class="badge badge-l">Lost</span>{% endif %}
+          </td>
+          <td>{{ entry.recipient.display_name|default:entry.recipient_name|default:"—" }}</td>
+          <td style="color:var(--ink-muted);">{{ entry.actioned_by.display_name|default:"—" }}</td>
+          <td style="color:var(--ink-muted);font-size:0.8rem;">{{ entry.notes|default:"" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">No assignment records found.</p>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

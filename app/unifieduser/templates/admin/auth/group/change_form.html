@@ -1,0 +1,28 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_related_objects %}
+{{ block.super }}
+
+<div class="module aligned" style="margin-top: 20px; padding: 16px; border: 1px solid #444; border-radius: 4px; background: #1a1a1a;">
+  <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: bold; color: #79aec8; text-transform: uppercase; letter-spacing: 0.05em;">
+    ⚡ Copy Permissions From Another Group
+  </h2>
+  <p style="margin: 0 0 12px 0; color: #aaa; font-size: 13px;">
+    Adds all permissions from the selected group into this one. Existing permissions are kept.
+  </p>
+  <form method="post" action="{{ clone_url }}">
+    {% csrf_token %}
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 200px;">
+        {{ clone_form.source_group }}
+      </div>
+      <button type="submit" class="button"
+              style="background: #417690; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap;">
+        Copy Permissions
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

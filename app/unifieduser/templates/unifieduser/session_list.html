@@ -1,0 +1,84 @@
+{% extends "bv_base.html" %}
+{% load static %}
+
+{% block title %}Sessions · BlightVeil{% endblock %}
+
+{% block meta %}
+  {{ block.super }}
+  <meta property="og:title" content="User Sessions">
+  <meta property="og:description" content="Session Management">
+{% endblock %}
+
+{% block extra_css %}
+.page-heading{font-family:var(--font-display);font-weight:800;font-size:1.6rem;letter-spacing:-.03em;margin:0 0 4px;color:var(--ink);}
+.page-sub{color:var(--ink-muted);font-size:.9rem;margin:0 0 28px;}
+.current-badge{display:inline-block;margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:99px;vertical-align:middle;}
+.cell-location{font-weight:500;color:var(--ink);}
+.cell-ip{font-size:.77rem;color:var(--ink-subtle);font-family:var(--font-mono);margin-top:2px;}
+.cell-device,.cell-time,.cell-date{color:var(--ink-muted);font-size:.875rem;}
+.row-current{background:var(--accent-light);}
+.row-current:hover td{background:var(--accent-light) !important;filter:brightness(.97);}
+.footer-note{color:var(--ink-muted);font-size:.875rem;margin:0;flex:1;}
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'unifieduser:index' %}" class="bv-wordmark">
+  <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+  <span class="bv-wm-name">BlightVeil</span>
+  <span class="bv-wm-sep">›</span>
+  <span class="bv-wm-page">Sessions</span>
+</a>
+<a class="bv-back" href="{% url 'unifieduser:index' %}">← Back to Portal</a>
+
+<h1 class="page-heading">Sessions</h1>
+<p class="page-sub">All active login sessions for your account</p>
+
+<div class="bv-card">
+  <div class="bv-table-overflow">
+    <table class="bv-table">
+      <thead>
+        <tr>
+          <th>Location</th>
+          <th>Device</th>
+          <th>Last active</th>
+          <th>Created</th>
+          <th>Expires</th>
+          <th class="sr-only">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for object in object_list %}
+        <tr {% if object.session_key == session_key %}class="row-current"{% endif %}>
+          <td><div class="cell-location">{{ object.location|default_if_none:"Unknown location" }}</div></td>
+          <td><div class="cell-device">{{ object.device|default_if_none:"Unknown device" }}</div></td>
+          <td class="cell-time">
+            {{ object.updated_at|timesince }} ago
+            {% if object.session_key == session_key %}<span class="current-badge">This session</span>{% endif %}
+          </td>
+          <td class="cell-date">{{ object.created_at|date }}</td>
+          <td class="cell-date">{{ object.expire_date|date }}</td>
+          <td>
+            <form method="post" action="{% url 'unifieduser:session_delete' pk=object.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="bv-btn bv-btn-danger bv-btn-sm">End session</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if object_list.count > 1 %}
+  <div class="bv-card-footer">
+    <p class="footer-note">Sign out of all other devices while staying logged in here.</p>
+    <form method="post" action="{% url 'unifieduser:session_delete_other' %}">
+      {% csrf_token %}
+      <button type="submit" class="bv-btn bv-btn-warning">End all other sessions</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

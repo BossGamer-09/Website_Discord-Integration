@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Import Sesh Template · Events{% endblock %}
+
+{% block content %}
+{% include "schedevents/_shared_css.html" %}
+<style>
+  .import-shell { max-width: 760px; }
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .preview-grid .full { grid-column: 1 / -1; }
+  @media(max-width:600px) { .preview-grid { grid-template-columns: 1fr; } }
+  .preview-field { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; }
+  .preview-field-label { font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-subtle); margin-bottom: 4px; }
+  .preview-field-value { font-size: .9rem; color: var(--ink); word-break: break-word; white-space: pre-wrap; }
+  .preview-field-value.mono { font-family: monospace; font-size: .82rem; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; background: var(--accent-light); color: var(--accent); font-size: .78rem; border: 1px solid var(--accent); }
+  .warn-list { list-style: none; padding: 0; margin: 0; }
+  .warn-list li { padding: 6px 0 6px 20px; position: relative; font-size: .85rem; color: var(--warning); }
+  .warn-list li::before { content: "⚠"; position: absolute; left: 0; }
+  .color-swatch { display: inline-block; width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); vertical-align: middle; margin-right: 6px; }
+  .textarea-dump { font-family: monospace; font-size: .82rem; resize: vertical; min-height: 220px; }
+  .step-indicator { display: flex; gap: 0; margin-bottom: 20px; }
+  .step { flex: 1; text-align: center; padding: 8px; font-size: .78rem; font-weight: 600; color: var(--ink-subtle); border-bottom: 2px solid var(--border); }
+  .step.active { color: var(--accent); border-color: var(--accent); }
+  .step.done { color: var(--success); border-color: var(--success); }
+  .indicator-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .indicator-opt { position: relative; }
+  .indicator-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .indicator-opt label { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; font-size: .83rem; font-weight: 500; }
+  .indicator-opt input:checked + label { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  .dot-sm { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+</style>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell import-shell">
+  <a href="{% url 'unifieduser:index' %}" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Events</span>
+  </a>
+  <div class="breadcrumb">
+    <a href="{% url 'unifieduser:index' %}">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'schedevents:dashboard' %}">Events</a><span class="breadcrumb-sep">›</span>
+    <span>Import from Sesh</span>
+  </div>
+
+  {% if messages %}
+  <ul class="messages">{% for msg in messages %}<li class="{{ msg.tags }}">{{ msg }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="dot"></span>
+      <h2>Import Event Template from Sesh</h2>
+    </div>
+
+    <div style="padding: 0 24px 4px;">
+      <div class="step-indicator">
+        <div class="step {% if not step %}active{% else %}done{% endif %}">1 — Paste dump</div>
+        <div class="step {% if step == 'preview' %}active{% endif %}">2 — Preview &amp; confirm</div>
+        <div class="step">3 — Done</div>
+      </div>
+    </div>
+
+    {% if step == "preview" %}
+    {# ── Step 2: Preview ─────────────────────────────────────────────── #}
+    <div style="padding: 0 24px 20px;">
+
+      {% if parsed.warnings %}
+      <ul class="warn-list" style="margin-bottom: 16px;">
+        {% for w in parsed.warnings %}<li>{{ w }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <div class="preview-grid">
+        <div class="preview-field full">
+          <div class="preview-field-label">Template Name</div>
+          <div class="preview-field-value">{{ parsed.title|default:"—" }}</div>
+        </div>
+
+        <div class="preview-field full">
+          <div class="preview-field-label">Description</div>
+          <div class="preview-field-value">{{ parsed.description|default:"—" }}</div>
+        </div>
+
+        <div class="preview-field">
+          <div class="preview-field-label">Duration</div>
+          <div class="preview-field-value">
+            {% if parsed.planned_duration %}
+              {% with s=parsed.planned_duration.total_seconds|floatformat:0 %}
+                {% widthratio s|add:"0" 3600 1 %}h
+              {% endwith %}
+              {# simpler: just show seconds #}
+              {{ parsed.planned_duration }}
+            {% else %}Default (2h){% endif %}
+          </div>
+        </div>
+
+        <div class="preview-field">
+          <div class="preview-field-label">Timezone</div>
+          <div class="preview-field-value">{{ parsed.timezone_name }}</div>
+        </div>
+
+        {% if parsed.recurring_rule %}
+        <div class="preview-field">
+          <div class="preview-field-label">Repeat</div>
+          <div class="preview-field-value mono">{{ parsed.recurring_rule }}</div>
+        </div>
+        {% endif %}
+
+        {% if parsed.color_hex %}
+        <div class="preview-field">
+          <div class="preview-field-label">Color</div>
+          <div class="preview-field-value">
+            <span class="color-swatch" style="background:{{ parsed.color_hex }};"></span>{{ parsed.color_hex }}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if parsed.cover_image_url %}
+        <div class="preview-field full">
+          <div class="preview-field-label">Cover Image</div>
+          <img src="{{ parsed.cover_image_url }}" alt="cover" style="max-height:140px;border-radius:6px;margin-top:6px;object-fit:cover;">
+        </div>
+        {% endif %}
+
+        {% if parsed.mentions_on_create %}
+        <div class="preview-field full">
+          <div class="preview-field-label">Mentions on Create <span style="font-weight:400;color:var(--ink-subtle);">(names — set role IDs in admin)</span></div>
+          <div class="tag-list">
+            {% for r in parsed.mentions_on_create %}<span class="tag">@{{ r }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if parsed.rsvp_option_specs %}
+        <div class="preview-field full">
+          <div class="preview-field-label">RSVP Options <span style="font-weight:400;color:var(--ink-subtle);">(will be added as server-wide defaults)</span></div>
+          <div class="tag-list">
+            {% for opt in parsed.rsvp_option_specs %}<span class="tag">{{ opt.emoji }} {{ opt.label }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if parsed.notification_specs %}
+        <div class="preview-field full">
+          <div class="preview-field-label">Notifications</div>
+          <div class="tag-list">
+            {% for n in parsed.notification_specs %}
+            <span class="tag">{{ n.minutes_before }}m before{% if n.title_template %} · {{ n.title_template|truncatechars:40 }}{% endif %}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="preview-field">
+          <div class="preview-field-label">Thread Title Template</div>
+          <div class="preview-field-value mono">{{ parsed.thread_title_template }}</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Thread Archive After</div>
+          <div class="preview-field-value">{{ parsed.thread_auto_archive_duration }}</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Join Thread on RSVP</div>
+          <div class="preview-field-value">{% if parsed.thread_join_on_rsvp %}Yes{% else %}No{% endif %}</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Maintain RSVP on Repeat</div>
+          <div class="preview-field-value">{% if parsed.allow_maintain_rsvp %}Yes{% else %}No{% endif %}</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Hide Attendees</div>
+          <div class="preview-field-value">{% if parsed.hide_attendees %}Yes{% else %}No{% endif %}</div>
+        </div>
+      </div>
+
+      {# Indicator + category picker #}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="1">
+        <input type="hidden" name="raw_dump" value="{{ raw_dump }}">
+
+        <div class="form-section-title">Event Type (Indicator)</div>
+        <div class="indicator-pick" style="margin-bottom:16px;">
+          {% for ind in indicators %}
+          <div class="indicator-opt">
+            <input type="radio" name="indicator" id="ind_{{ ind.id }}" value="{{ ind.id }}"
+              {% if forloop.first %}checked{% endif %}>
+            <label for="ind_{{ ind.id }}">
+              <span class="dot-sm" style="background:{{ ind.color_hex }};"></span>
+              {{ ind.prefix }} {{ ind.name }}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if categories %}
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" for="category">Template Category <span class="label-optional">(optional)</span></label>
+          <select class="form-control" id="category" name="category" style="max-width:320px;">
+            <option value="">— None —</option>
+            {% for cat in categories %}
+            <option value="{{ cat.pk }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div class="card-actions" style="padding-top:0;">
+          <a href="{% url 'schedevents:import_template' %}" class="btn btn-ghost">← Start Over</a>
+          <div class="ms-auto">
+            <button type="submit" class="btn btn-primary">✅ Create Template</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    {% else %}
+    {# ── Step 1: Paste form ──────────────────────────────────────────── #}
+    <div style="padding: 0 24px 24px;">
+      <p style="color:var(--ink-muted);font-size:.9rem;margin-bottom:16px;">
+        Open your Sesh event, copy the full info dump (Name, Start Time, Duration… through RSVP Lock Before Time),
+        paste it below, and we'll turn it into a reusable event template.
+      </p>
+
+      {% if error %}
+      <div class="alert alert-danger" style="margin-bottom:12px;">{{ error }}</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" for="raw_dump">Sesh Event Info Dump</label>
+          <textarea class="form-control textarea-dump" id="raw_dump" name="raw_dump"
+            placeholder="Name&#10;FPS Mondays&#10;Start Time&#10;Monday, April 20, 2026 4pm&#10;Duration&#10;2 hours&#10;..." required>{{ raw_dump|default:"" }}</textarea>
+        </div>
+        <div class="card-actions" style="padding-top:0;">
+          <a href="{% url 'schedevents:dashboard' %}" class="btn btn-ghost">Cancel</a>
+          <div class="ms-auto">
+            <button type="submit" class="btn btn-primary">Parse →</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+{% endblock %}

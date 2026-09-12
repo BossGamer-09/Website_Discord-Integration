@@ -1,0 +1,242 @@
+{% extends "bv_base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meta %}
+  <meta property="og:type" content="website">
+  {% if user.is_authenticated %}
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="BlightVeil Portal">
+  {% else %}
+    {% if next_url %}<meta property="og:title" content="Auth for {{ next_url }}">{% else %}<meta property="og:title" content="Auth Required">{% endif %}
+    <meta property="og:description" content="This page requires login and/or additional permissions.">
+  {% endif %}
+{% endblock %}
+
+{% block shell_class %}bv-shell-narrow{% endblock %}
+
+{% block extra_css %}
+/* ── User greeting ── */
+.user-greet{padding:20px 22px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);}
+.user-greet-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:1.15rem;color:#fff;flex-shrink:0;}
+.user-greet-name{font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--ink);}
+.user-greet-sub{font-size:.77rem;color:var(--ink-muted);margin-top:2px;}
+
+/* ── App grid ── */
+.apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0;}
+.app-card{display:flex;flex-direction:column;align-items:flex-start;padding:20px 22px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-decoration:none;color:inherit;transition:background-color .14s;position:relative;}
+.app-card:hover{background:var(--accent-light);}
+.app-card-icon{width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:12px;flex-shrink:0;}
+.app-card-icon-sc        {background:linear-gradient(135deg,#0d1830,#1a3a6e);border:1px solid rgba(61,142,255,.3);}
+.app-card-icon-scorecard {background:linear-gradient(135deg,#0f1a0f,#1a3a1a);border:1px solid rgba(76,175,80,.35);}
+.app-card-icon-events    {background:linear-gradient(135deg,#0f172a,#1e3a5f);border:1px solid rgba(59,130,246,.3);}
+.app-card-icon-pilotboard{background:linear-gradient(135deg,#1a0f2e,#3b1a6e);border:1px solid rgba(167,139,250,.35);}
+.app-card-icon-killtracker{background:linear-gradient(135deg,#1a0606,#690404);border:1px solid rgba(255,59,59,.45);color:#ff3b3b;text-shadow:0 0 12px rgba(255,59,59,.5);}
+.app-card-icon-mailclient{background:linear-gradient(135deg,#1a0f1a,#3b1a5e);border:1px solid rgba(167,139,250,.35);}
+.app-card-icon-inventory  {background:linear-gradient(135deg,#0f1a12,#1a3d24);border:1px solid rgba(34,197,94,.3);}
+.app-card-icon-roster    {background:linear-gradient(135deg,#101828,#1c3553);border:1px solid rgba(99,179,237,.3);}
+.app-card-icon-merits    {background:linear-gradient(135deg,#1a1506,#3d3000);border:1px solid rgba(234,179,8,.35);}
+.app-card-icon-analytics {background:linear-gradient(135deg,#0a1628,#0f2d4a);border:1px solid rgba(37,99,235,.4);}
+.app-card-icon-kb        {background:linear-gradient(135deg,#12100a,#2d2510);border:1px solid rgba(234,179,8,.3);}
+.app-card-name{font-weight:600;font-size:.9rem;color:var(--ink);margin-bottom:3px;transition:color .14s;}
+.app-card:hover .app-card-name{color:var(--accent);}
+.app-card-desc{font-size:.77rem;color:var(--ink-subtle);line-height:1.45;}
+.app-card-arrow{position:absolute;top:16px;right:14px;color:var(--ink-subtle);font-size:.72rem;opacity:0;transition:opacity .14s,transform .14s;}
+.app-card:hover .app-card-arrow{opacity:1;transform:translateX(2px);}
+.app-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;margin-left:5px;vertical-align:middle;animation:app-pulse 2s ease-in-out infinite;}
+@keyframes app-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── Login gate ── */
+.login-gate{text-align:center;padding:56px 24px;}
+.login-gate h1{font-family:var(--font-display);font-weight:800;font-size:2rem;letter-spacing:-.03em;margin-bottom:8px;color:var(--ink);}
+.login-gate p{color:var(--ink-muted);margin-bottom:32px;font-size:.95rem;}
+.login-options{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto;}
+
+@media(max-width:480px){.apps-grid{grid-template-columns:1fr 1fr;}}
+{% endblock %}
+
+{% block content %}
+
+<div class="bv-wordmark">
+  <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+  <span class="bv-wm-name">BlightVeil</span>
+  <span class="bv-wm-sep">›</span>
+  <span class="bv-wm-page">Portal</span>
+</div>
+
+{% if user.is_authenticated %}
+
+  <div class="bv-card">
+    <div class="user-greet">
+      <div class="user-greet-avatar">{{ user.display_name|default:user.username|slice:":1"|upper }}</div>
+      <div>
+        <div class="user-greet-name">Welcome back, {{ user.display_name|default:user.username }}</div>
+        <div class="user-greet-sub">BlightVeil Portal</div>
+      </div>
+    </div>
+    <div class="bv-card-header">
+      <span class="bv-dot"></span>
+      <h2>My Apps</h2>
+    </div>
+    <div class="apps-grid">
+
+      <a class="app-card" href="{% url 'app.sc_tracker:dashboard' %}">
+        <div class="app-card-icon app-card-icon-sc">🚀</div>
+        <div class="app-card-name">SC Tracker<span class="app-live-dot" title="Live data"></span></div>
+        <div class="app-card-desc">RSI status &amp; Executive Hangar timer</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+
+      {% if show_infantryboard_app %}
+      <a class="app-card" href="{% url 'infantryboard:dashboard' %}">
+        <div class="app-card-icon app-card-icon-scorecard">🎯</div>
+        <div class="app-card-name">Infantry Roster</div>
+        <div class="app-card-desc">Infantry skill ratings &amp; goal tracking</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_events_app %}
+      <a class="app-card" href="{% url 'schedevents:dashboard' %}">
+        <div class="app-card-icon app-card-icon-events">📅</div>
+        <div class="app-card-name">Events</div>
+        <div class="app-card-desc">RSVP, reminders &amp; attendance tracking</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_pilotboard_app %}
+      <a class="app-card" href="{% url 'pilotboard:dashboard' %}">
+        <div class="app-card-icon app-card-icon-pilotboard">☠</div>
+        <div class="app-card-name">Pilot Roster</div>
+        <div class="app-card-desc">Star Citizen pilot skill ratings &amp; goal tracking</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_killtracker_app %}
+      <a class="app-card" href="{% url 'killtracker:dashboard' %}">
+        <div class="app-card-icon app-card-icon-killtracker">⚔</div>
+        <div class="app-card-name">KillTracker</div>
+        <div class="app-card-desc">API keys, kill feed &amp; leaderboard</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_loot_app %}
+      <a class="app-card" href="{% url 'quartermaster:overview' %}">
+        <div class="app-card-icon app-card-icon-inventory">📦</div>
+        <div class="app-card-name">Quartermaster</div>
+        <div class="app-card-desc">Org stockpile, QM inventory, merit &amp; payout requests</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+    </div>
+  </div>
+
+  {% if show_staff_panel %}
+  <div class="bv-card">
+    <div class="bv-card-header">
+      <span class="bv-dot bv-dot-warning"></span>
+      <h2>Staff Panel</h2>
+      <span class="bv-badge bv-badge-staff ms-auto">Staff</span>
+    </div>
+    <div class="apps-grid">
+
+      {% if show_analytics_app %}
+      <a class="app-card" href="{% url 'analytics:overview' %}">
+        <div class="app-card-icon app-card-icon-analytics">📊</div>
+        <div class="app-card-name">Org Analytics</div>
+        <div class="app-card-desc">Member activity, event health, kill stats &amp; leadership</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_roster_app %}
+      <a class="app-card" href="{% url 'org:roster' %}">
+        <div class="app-card-icon app-card-icon-roster">👥</div>
+        <div class="app-card-name">Org Roster</div>
+        <div class="app-card-desc">Member profiles, ranks, timezones &amp; referrals</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_mailclient_app %}
+      <a class="app-card" href="{% url 'mailclient:inbox' %}">
+        <div class="app-card-icon app-card-icon-mailclient">✉️</div>
+        <div class="app-card-name">Staff Inbox</div>
+        <div class="app-card-desc">View and reply to incoming contact emails</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+      {% if show_kb_app %}
+      <a class="app-card" href="{% url 'discordwebcms:post_index' %}">
+        <div class="app-card-icon app-card-icon-kb">📖</div>
+        <div class="app-card-name">Knowledge Base</div>
+        <div class="app-card-desc">Guides, meta &amp; org knowledge articles</div>
+        <span class="app-card-arrow">→</span>
+      </a>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bv-card">
+    <div class="bv-card-header">
+      <span class="bv-dot"></span>
+      <h2>Account</h2>
+    </div>
+    <div class="bv-nav-row">
+      <div>
+        <div class="bv-nav-row-label">Sessions</div>
+        <div class="bv-nav-row-desc">View and manage active login sessions</div>
+      </div>
+      <a class="bv-btn bv-btn-primary bv-btn-sm" href="{% url 'unifieduser:session_list' %}">Manage</a>
+    </div>
+    <div class="bv-card-footer">
+      {% if not user.is_verified %}
+        <a class="bv-btn bv-btn-ghost" href="{{ otp_verify_url }}">Set up 2FA</a>
+      {% endif %}
+      <div class="ms-auto">
+        <a class="bv-btn bv-btn-warning" href="{% url 'unifieduser:logout' %}">Sign out</a>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+
+  <div class="bv-card">
+    <div class="login-gate">
+      <h1>Welcome back</h1>
+      <p>Sign in to access your account and apps.</p>
+      <div class="login-options">
+        <a class="bv-btn bv-btn-discord bv-btn-lg bv-btn-block" href="{{ discord_login_url }}">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M15.247 1.18A14.85 14.85 0 0 0 11.548 0a.056.056 0 0 0-.059.028c-.16.285-.337.656-.461.948a13.716 13.716 0 0 0-4.056 0 9.585 9.585 0 0 0-.468-.948.058.058 0 0 0-.059-.028A14.813 14.813 0 0 0 2.748 1.18a.053.053 0 0 0-.024.02C.398 4.685-.238 8.087.074 11.448a.062.062 0 0 0 .023.042 14.924 14.924 0 0 0 4.494 2.272.059.059 0 0 0 .064-.021c.346-.473.654-.971.919-1.496a.057.057 0 0 0-.031-.08 9.827 9.827 0 0 1-1.403-.669.058.058 0 0 1-.006-.096c.094-.07.188-.144.278-.218a.056.056 0 0 1 .058-.008c2.944 1.344 6.13 1.344 9.04 0a.056.056 0 0 1 .059.007c.09.075.184.149.279.219a.058.058 0 0 1-.005.096 9.217 9.217 0 0 1-1.404.668.057.057 0 0 0-.03.081c.27.524.578 1.022.918 1.495a.057.057 0 0 0 .064.022 14.876 14.876 0 0 0 4.503-2.272.059.059 0 0 0 .023-.041c.375-3.878-.628-7.25-2.659-10.248a.046.046 0 0 0-.023-.021ZM6.01 9.394c-.874 0-1.594-.803-1.594-1.789 0-.987.705-1.79 1.594-1.79.896 0 1.609.81 1.594 1.79 0 .986-.705 1.789-1.594 1.789Zm5.892 0c-.874 0-1.594-.803-1.594-1.789 0-.987.705-1.79 1.594-1.79.896 0 1.609.81 1.594 1.79 0 .986-.698 1.789-1.594 1.789Z" fill="currentColor"/></svg>
+          Continue with Discord
+        </a>
+        <a class="bv-btn bv-btn-ghost bv-btn-lg bv-btn-block" href="{{ site_login_url }}">Alternative sign in</a>
+      </div>
+    </div>
+  </div>
+
+{% endif %}
+
+{% if user.is_staff %}
+<div class="bv-card">
+  <div class="bv-card-header">
+    <span class="bv-dot bv-dot-warning"></span>
+    <h2>Staff Tools</h2>
+    <span class="bv-badge bv-badge-staff" style="margin-left:auto;">Staff</span>
+  </div>
+  <div class="bv-card-footer">
+    <a class="bv-btn bv-btn-ghost" href="{% url 'admin:index' %}">Admin Panel</a>
+    <a class="bv-btn bv-btn-ghost" href="/api/v1/backend/">REST API Explorer</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

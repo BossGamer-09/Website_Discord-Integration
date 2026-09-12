@@ -1,0 +1,163 @@
+{% load static %}
+{% load compress %}
+
+{% load preferences %}
+
+
+<!DOCTYPE html>
+<html lang="en" data-theme="" prefix="og: https://ogp.me/ns#">
+
+
+
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock title %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    {# Flash-prevention: runs before first paint so no light flash on dark-preferring browsers #}
+    <script>
+    (function(){
+      var t = localStorage.getItem('bv-theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static "image/org/apple-touch-icon.png" %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static "image/org/favicon-16x16.png" %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static "image/org/favicon-32x32.png" %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static "image/org/android-chrome-192x192.png" %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% static "image/org/android-chrome-512x512.png" %}">
+    <link rel="manifest" href="{% static "site.webmanifest" %}">
+
+    {% block meta %}
+        <meta name="theme-color" content="#513052">
+        <meta property="og:type" content="website" />
+	    <meta property="og:locale" content="en_US" />
+        <meta property="og:site_name" content="BlightVeil Apps" />
+        <meta property="og:url" content="{{ request.get_full_path }}" />
+        <meta property="og:image" content="{% static "image/org/bv-org-logo.png" %}" />
+    {% endblock meta %}
+
+    {% block css %}
+        <style>
+        :root {
+          --ink: #0f1117; --ink-muted: #4a4f5e; --ink-subtle: #9399a8;
+          --surface: #f4f5f9; --surface-raised: #ecedf3; --card-bg: #ffffff;
+          --border: #e2e4ef; --border-strong: #c8cadb;
+          --accent: #2563eb; --accent-light: #eff4ff; --accent-hover: #1d4ed8;
+          --success: #16a34a; --success-light: #f0fdf4; --success-border: #bbf7d0;
+          --danger: #dc2626;  --danger-light:  #fef2f2; --danger-border:  #fecaca;
+          --warning: #d97706; --warning-light: #fffbeb; --warning-border: #fde68a;
+          --purple: #7c3aed;  --purple-light:  #f5f3ff; --purple-border:  #ddd6fe;
+          --radius: 14px; --radius-sm: 8px;
+          --shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.06);
+          --shadow-hover: 0 4px 12px rgba(37,99,235,.14), 0 8px 32px rgba(37,99,235,.10);
+          --shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 6px 28px rgba(0,0,0,.08);
+          --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          --font-display: 'Syne', sans-serif;
+          --font-mono: 'Space Mono', monospace;
+        }
+        [data-theme="dark"] {
+          --ink: #e8eaf0; --ink-muted: #8b91a6; --ink-subtle: #555c73;
+          --surface: #0b0d12; --surface-raised: #10121a; --card-bg: #151820;
+          --border: #22263a; --border-strong: #363a52;
+          --accent: #3b82f6; --accent-light: #162240; --accent-hover: #60a5fa;
+          --success: #22c55e; --success-light: #042010; --success-border: #14532d;
+          --danger: #f87171;  --danger-light:  #250000; --danger-border:  #7f1d1d;
+          --warning: #f59e0b; --warning-light: #1c1200; --warning-border: #6a3800;
+          --purple: #a78bfa;  --purple-light:  #1a1040; --purple-border:  #4c1d95;
+          --shadow: 0 1px 3px rgba(0,0,0,.35), 0 4px 20px rgba(0,0,0,.45);
+          --shadow-hover: 0 4px 12px rgba(59,130,246,.22), 0 8px 32px rgba(59,130,246,.14);
+          --shadow-card: 0 1px 3px rgba(0,0,0,.4), 0 6px 28px rgba(0,0,0,.55);
+        }
+        html { -webkit-font-smoothing: antialiased; }
+        body { transition: background-color .22s ease, color .18s ease; }
+        </style>
+
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/atom-one-dark.min.css" media="all" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" media="all" rel="stylesheet">
+
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.bubble.min.css" media="all" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.snow.min.css" media="all" rel="stylesheet">
+        <link href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" media="all" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/quill-mention@4.0.0/dist/quill.mention.min.css" media="all" rel="stylesheet">
+
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        
+        <link href="{% static 'django_select2/django_select2.css' %}" media="screen" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" media="screen" rel="stylesheet">
+
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "scss/main.scss" %}" />
+        {% endcompress %}
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    {% endblock css %}
+
+    {% block extracss %}{% endblock extracss %}
+</head>
+
+<body>
+
+    <div class="container">
+        {% block messages %}
+        {% if messages %}
+            <div id="#django-msg-wrapper" class="row">
+                {% for message in messages %}
+                    <div class="col-lg-12">
+                        <div class="alert my-5 alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>		 
+                            <h4 class="alert-heading">Notice</h4>
+                            <p class="mb-0">{{ message }}</p>
+                        </div>
+                    <div class="col-lg-12">
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endblock messages %}
+
+        {% block content %}{% endblock content %}
+    </div>
+
+    {% block js %}
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.15.0/umd/popper.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="{% static 'django_select2/django_select2.js' %}"></script>
+        <script src="{% static 'admin/js/vendor/select2/i18n/en.js' %}"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/quill-mention@4.0.0/dist/quill.mention.min.js"></script>
+
+        <script>
+        /* Wire theme-toggle buttons injected by child templates to the canonical bv-theme key */
+        (function() {
+          var btn = document.getElementById('bvThemeToggle');
+          if (!btn) return;
+          btn.addEventListener('click', function() {
+            var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('bv-theme', next);
+          });
+        })();
+        </script>
+    {% endblock js %}
+
+    {% block extrajs %}{% endblock extrajs %}
+</body>
+</html>

@@ -1,0 +1,284 @@
+{% extends "quartermaster/_base.html" %}
+{% load qm_filters %}
+{% block title %}Quartermaster{% endblock %}
+{% block wm_page %}Quartermaster{% endblock %}
+{% block subtitle %}Org stockpile, QM inventory &amp; merit requests{% endblock %}
+
+{% block content %}
+<style>
+/* ── nav bar ─────────────────────────────────────────────────────────────── */
+.qm-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px;}
+.qm-nav a{display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:500;padding:7px 16px;border-radius:10px;text-decoration:none;border:1px solid var(--border);color:var(--ink-muted);background:var(--card-bg);transition:all 0.15s;}
+.qm-nav a:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.qm-nav a.qm-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.qm-nav a.qm-primary:hover{opacity:0.88;}
+
+/* ── stat chips ─────────────────────────────────────────────────────────── */
+.stat-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.stat-chip{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px 20px;flex:1;min-width:120px;text-align:center;}
+.stat-chip .sc-val{font-family:'Space Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--ink);line-height:1;}
+.stat-chip .sc-label{font-size:0.72rem;color:var(--ink-subtle);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.stat-chip.sc-warn .sc-val{color:#f59e0b;}
+.stat-chip.sc-danger .sc-val{color:#dc2626;}
+.stat-chip.sc-ok .sc-val{color:#16a34a;}
+
+/* ── section headers ────────────────────────────────────────────────────── */
+.qm-section{margin:40px 0 16px;display:flex;align-items:center;gap:12px;}
+.qm-section-icon{width:36px;height:36px;border-radius:10px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.qm-section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.04em;text-transform:uppercase;}
+.qm-section-line{flex:1;height:1px;background:var(--border);}
+.qm-section-action{font-size:0.78rem;color:var(--accent);text-decoration:none;white-space:nowrap;}
+.qm-section-action:hover{text-decoration:underline;}
+
+/* ── stockpile table ────────────────────────────────────────────────────── */
+.sp-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.sp-cat-label{font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle);padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);}
+.sp-row{display:grid;grid-template-columns:1fr 110px 160px 100px;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.sp-row.sp-row-qm{grid-template-columns:1fr 110px 160px 100px 160px;}
+.sp-row:last-child{border-bottom:none;}
+.sp-row:hover{background:var(--accent-light);}
+.sp-name{font-size:0.88rem;font-weight:600;}
+.sp-loc{font-family:'Space Mono',monospace;font-size:0.68rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:inline-block;}
+[data-theme="dark"] .sp-loc{background:#1a2540;color:#60a5fa;}
+.sp-qty{font-family:'Space Mono',monospace;font-size:0.82rem;color:var(--ink);}
+.sp-qty span{color:var(--ink-subtle);font-size:0.75rem;}
+.sp-qty-sub{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--accent);margin-top:2px;}
+.sp-bar-wrap{width:100%;height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
+.sp-bar{height:100%;border-radius:4px;transition:width 0.4s ease;}
+.sp-bar-green{background:#16a34a;} .sp-bar-yellow{background:#f59e0b;} .sp-bar-red{background:#dc2626;} .sp-bar-blue{background:#2563eb;}
+.sp-status{font-size:0.72rem;font-weight:600;display:flex;align-items:center;gap:4px;}
+.sp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sp-hdr{display:grid;grid-template-columns:1fr 110px 160px 100px;gap:12px;padding:7px 16px;font-size:0.68rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle);border-bottom:1px solid var(--border);}
+.sp-hdr.sp-hdr-qm{grid-template-columns:1fr 110px 160px 100px 160px;}
+.sp-set-form{display:flex;gap:5px;align-items:center;}
+.sp-set-inp{font-family:'Space Mono',monospace;font-size:0.78rem;padding:4px 7px;width:72px;border:1px solid var(--border);border-radius:7px;background:var(--card-bg);color:var(--ink);text-align:right;transition:border-color 0.15s;}
+.sp-set-inp:focus{outline:none;border-color:var(--accent);}
+.sp-set-btn{font-size:0.72rem;padding:4px 9px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600;white-space:nowrap;transition:opacity 0.15s;}
+.sp-set-btn:hover{opacity:0.85;}
+
+/* ── equipment grid ─────────────────────────────────────────────────────── */
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:28px;}
+.eq-cat-label{font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle);margin:20px 0 10px;}
+.eq-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:6px;transition:all 0.15s;position:relative;overflow:hidden;}
+.eq-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border);transition:background 0.15s;}
+.eq-card:hover{border-color:var(--accent);box-shadow:0 4px 20px rgba(37,99,235,0.1);}
+.eq-card:hover::before{background:var(--accent);}
+.eq-card.eq-low::before{background:#f59e0b;}
+.eq-card.eq-empty::before{background:#dc2626;}
+.eq-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;}
+.eq-subcat{font-size:0.72rem;color:var(--ink-subtle);}
+.eq-desc{font-size:0.78rem;color:var(--ink-muted);line-height:1.4;margin-bottom:4px;}
+.eq-meta{font-size:0.75rem;color:var(--ink-muted);}
+.eq-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px;}
+.badge{font-family:'Space Mono',monospace;font-size:0.68rem;padding:2px 8px;border-radius:10px;font-weight:700;white-space:nowrap;}
+.badge-avail{background:#dcfce7;color:#15803d;}[data-theme="dark"] .badge-avail{background:#052e16;color:#4ade80;}
+.badge-out{background:#fef9c3;color:#854d0e;}[data-theme="dark"] .badge-out{background:#1c1404;color:#fbbf24;}
+.badge-low{background:#fee2e2;color:#b91c1c;}[data-theme="dark"] .badge-low{background:#1f0a0a;color:#f87171;}
+.badge-type{background:var(--accent-light);color:var(--accent);}
+
+/* ── empty states ───────────────────────────────────────────────────────── */
+.qm-empty{padding:32px 20px;text-align:center;color:var(--ink-subtle);font-size:0.88rem;background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);margin-bottom:20px;}
+.qm-empty strong{display:block;font-size:1.1rem;margin-bottom:6px;color:var(--ink-muted);}
+</style>
+
+{# ── Nav ──────────────────────────────────────────────────────────────────── #}
+<div class="qm-nav">
+  {% if can_manage %}
+    <a href="{% url 'quartermaster:loot_requests' %}" class="qm-primary">📋 Loot Requests</a>
+    <a href="{% url 'quartermaster:adjust_stock' %}">⚖️ Adjust Quantities</a>
+  {% endif %}
+  <a href="{% url 'quartermaster:craft_guide' %}">⚒️ Craft Guide</a>
+  <a href="{% url 'quartermaster:my_merit_requests' %}">🏅 My Merit Requests</a>
+  {% if can_manage %}
+    <a href="{% url 'quartermaster:merit_list' %}">📊 All Merit Requests</a>
+  {% endif %}
+  {% if can_assign %}
+    <a href="{% url 'quartermaster:log' %}">📋 Assignment Log</a>
+  {% endif %}
+</div>
+
+{# ── Stat strip ───────────────────────────────────────────────────────────── #}
+{% if loot_items %}
+{% with loot_items|length as total_loot %}
+{% comment %}Compute simple counts via template logic{% endcomment %}
+<div class="stat-strip">
+  <div class="stat-chip">
+    <div class="sc-val">{{ total_loot }}</div>
+    <div class="sc-label">Stockpile Items</div>
+  </div>
+  {% if can_stock %}
+  <div class="stat-chip">
+    <div class="sc-val">{{ stock_items|length }}</div>
+    <div class="sc-label">Equipment Types</div>
+  </div>
+  {% endif %}
+</div>
+{% endwith %}
+{% endif %}
+
+{# ── Org Stockpile ────────────────────────────────────────────────────────── #}
+<div class="qm-section">
+  <div class="qm-section-icon">📦</div>
+  <div class="qm-section-title">Org Stockpile</div>
+  <div class="qm-section-line"></div>
+  {% if can_manage %}<a class="qm-section-action" href="{% url 'quartermaster:loot_requests' %}">View requests →</a>{% endif %}
+</div>
+
+{% if loot_items %}
+  {% regroup loot_items by category as cat_list %}
+  {% for cat in cat_list %}
+  {% with cat.grouper as cat_key %}
+  <div class="sp-card">
+    <div class="sp-cat-label">
+      {% if cat_key == "CURRENCY" %}💰
+      {% elif cat_key == "WIKELO_CURRENCY" %}🪙
+      {% elif cat_key == "WIKELO_MATERIAL" %}🪨
+      {% elif cat_key == "MONSTER_PART" %}🦷
+      {% elif cat_key == "MILITARY" %}🎖️
+      {% elif cat_key == "COMPONENT" %}⚙️
+      {% elif cat_key == "WEAPON" %}🔫
+      {% elif cat_key == "LEGACY" %}📦
+      {% else %}🔹{% endif %}
+      {{ cat.list.0.get_category_display }}
+    </div>
+    <div class="sp-hdr {% if can_manage %}sp-hdr-qm{% endif %}">
+      <div>Item</div><div>Location</div><div>Quantity / Target</div><div>Status</div>
+      {% if can_manage %}<div>Set Qty</div>{% endif %}
+    </div>
+    {% for item in cat.list %}
+    {% with item.stock.quantity|default:0 as qty %}
+    <div class="sp-row {% if can_manage %}sp-row-qm{% endif %}">
+      <div class="sp-name">{{ item.name }}</div>
+      <div>
+        {% if not item.location_agnostic %}
+          <span class="sp-loc">{{ item.get_location_display }}</span>
+        {% else %}
+          <span style="color:var(--ink-subtle);font-size:0.8rem;">Universal</span>
+        {% endif %}
+      </div>
+      <div>
+        <div class="sp-qty">
+          {{ qty|commafy }} <span>/ {% if item.target_qty %}{{ item.target_qty|commafy }}{% else %}∞{% endif %}</span>
+        </div>
+        {% if item.category == "CURRENCY" %}
+          {% if "merit" in item.name|lower %}
+            {% with sfx=qty|prison_time_suffix %}{% if sfx %}<div class="sp-qty-sub">{{ sfx }}</div>{% endif %}{% endwith %}
+          {% else %}
+            {% with sfx=qty|auec_suffix %}{% if sfx %}<div class="sp-qty-sub">{{ sfx }}</div>{% endif %}{% endwith %}
+          {% endif %}
+        {% endif %}
+        {% if item.target_qty %}
+        <div class="sp-bar-wrap" style="margin-top:5px;">
+          {% if item.excess_threshold and qty >= item.excess_threshold %}
+            <div class="sp-bar sp-bar-blue" style="width:100%"></div>
+          {% elif qty >= item.target_qty %}
+            <div class="sp-bar sp-bar-green" style="width:100%"></div>
+          {% elif item.low_threshold and qty <= item.low_threshold %}
+            {% widthratio qty item.target_qty 100 as pct %}
+            <div class="sp-bar sp-bar-red" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
+          {% else %}
+            {% widthratio qty item.target_qty 100 as pct %}
+            <div class="sp-bar sp-bar-yellow" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      <div>
+        {% if item.excess_threshold and qty >= item.excess_threshold %}
+          <div class="sp-status"><div class="sp-dot" style="background:#2563eb;"></div>Excess</div>
+        {% elif item.low_threshold and qty <= item.low_threshold %}
+          <div class="sp-status"><div class="sp-dot" style="background:#dc2626;"></div>Critical</div>
+        {% elif item.target_qty and qty < item.target_qty %}
+          <div class="sp-status"><div class="sp-dot" style="background:#f59e0b;"></div>Low</div>
+        {% else %}
+          <div class="sp-status"><div class="sp-dot" style="background:#16a34a;"></div>On Target</div>
+        {% endif %}
+      </div>
+      {% if can_manage %}
+      <div>
+        <form method="post" action="{% url 'quartermaster:adjust_stock' %}" class="sp-set-form">
+          {% csrf_token %}
+          <input type="text" inputmode="numeric" class="sp-set-inp comma-input" name="qty_{{ item.pk }}" value="{{ qty|commafy }}" autocomplete="off">
+          <button type="submit" class="sp-set-btn">Set</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% endwith %}
+  {% endfor %}
+{% else %}
+  <div class="qm-empty">
+    <strong>No stockpile items yet</strong>
+    QMs can configure items via the admin panel or <code>/qm add_item</code>.
+  </div>
+{% endif %}
+
+{# ── QM Equipment ─────────────────────────────────────────────────────────── #}
+{% if can_stock %}
+<div class="qm-section">
+  <div class="qm-section-icon">🗃️</div>
+  <div class="qm-section-title">QM Equipment</div>
+  <div class="qm-section-line"></div>
+  {% if can_assign %}<a class="qm-section-action" href="{% url 'quartermaster:log' %}">Assignment log →</a>{% endif %}
+</div>
+
+{% if stock_items %}
+  {% regroup stock_items by category as scat_list %}
+  {% for cat in scat_list %}
+    <div class="eq-cat-label">{{ cat.grouper|default:"Uncategorised" }}</div>
+    <div class="eq-grid">
+      {% for item in cat.list %}
+      {% with avail=item.available assigned=item.assigned %}
+      <a class="eq-card {% if avail == 0 %}eq-empty{% elif avail <= item.low_stock_threshold %}eq-low{% endif %}"
+         href="{% url 'quartermaster:item_detail' item.slug %}">
+        <div class="eq-name">{{ item.name }}</div>
+        {% if item.subcategory %}<div class="eq-subcat">{{ item.subcategory }}</div>{% endif %}
+        <div class="badge badge-type">{{ item.get_tracking_mode_display }}</div>
+        {% if item.description %}<div class="eq-desc">{{ item.description|truncatechars:70 }}</div>{% endif %}
+        {% if item.stats %}
+        <div class="eq-meta">{% for k,v in item.stats.items %}<strong>{{ k }}:</strong> {{ v }}  {% endfor %}</div>
+        {% endif %}
+        <div class="eq-badges">
+          {% if avail == 0 %}
+            <span class="badge badge-low">None available</span>
+          {% elif avail <= item.low_stock_threshold %}
+            <span class="badge badge-low">⚠ {{ avail }} left</span>
+          {% else %}
+            <span class="badge badge-avail">{{ avail }} available</span>
+          {% endif %}
+          {% if assigned %}<span class="badge badge-out">{{ assigned }} out</span>{% endif %}
+        </div>
+      </a>
+      {% endwith %}
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="qm-empty">
+    <strong>No equipment in stock</strong>
+    QMs can add items via the admin panel or <code>/qm add</code>.
+  </div>
+{% endif %}
+{% endif %}
+
+<script>
+(function(){
+  function commaFormat(v){
+    var n=parseInt(v.replace(/,/g,''),10);
+    return isNaN(n)?v:n.toLocaleString('en-US');
+  }
+  document.querySelectorAll('.comma-input').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var pos=inp.selectionStart,raw=inp.value.replace(/,/g,''),prev=inp.value.length;
+      inp.value=commaFormat(raw);
+      var diff=inp.value.length-prev;
+      inp.setSelectionRange(pos+diff,pos+diff);
+    });
+    inp.addEventListener('focus',function(){inp.select();});
+  });
+})();
+</script>
+{% endblock %}

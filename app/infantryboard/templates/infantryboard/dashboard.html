@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infantry Roster – BlightVeil</title>
+<link rel="shortcut icon" href="{% static "favicon.ico" %}" type="image/x-icon">
+<link rel="icon" type="image/x-icon" href="{% static "favicon.ico" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script data-cfasync="false">(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+:root{--ink:#0f1117;--ink-muted:#4a4f5e;--ink-subtle:#9399a8;--surface:#f7f8fc;--card-bg:#ffffff;--border:#e4e6ef;--accent:#7c3aed;--accent-light:#f3eeff;--accent-hover:#6d28d9;--radius:14px;--shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.07);}
+[data-theme="dark"]{--ink:#e8eaf0;--ink-muted:#8b91a6;--ink-subtle:#555c73;--surface:#0d0f14;--card-bg:#161922;--border:#252836;--accent:#a78bfa;--accent-light:#1e1535;--accent-hover:#c4b5fd;--shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 24px rgba(0,0,0,0.5);}
+*,*::before,*::after{box-sizing:border-box;}
+body{background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--ink);margin:0;}
+.theme-toggle{position:fixed;top:18px;right:20px;z-index:999;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--ink);transform:scale(1.08);}
+.icon-sun{display:none;}.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}[data-theme="dark"] .icon-moon{display:none;}
+.page-shell{max-width:1040px;margin:0 auto;padding:48px 24px 80px;}
+.page-wordmark{margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.bv-logo-img{height:36px;width:36px;object-fit:contain;border-radius:8px;flex-shrink:0;}
+.bv-wm-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-0.02em;color:var(--ink);}
+.bv-wm-sep{color:var(--ink-subtle);font-size:1rem;font-weight:300;}
+.bv-wm-page{font-family:'Syne',sans-serif;font-weight:600;font-size:1.0rem;color:var(--accent);}
+.page-subtitle{color:var(--ink-muted);font-size:0.88rem;margin-bottom:36px;}
+.page-wordmark a{color:inherit;text-decoration:none;}
+.section-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:24px;overflow:hidden;animation:fadeUp 0.35s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.section-header{padding:18px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.section-header h2{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin:0;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.badge-count{font-family:'Space Mono',monospace;font-size:0.72rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 8px;margin-left:4px;}
+.search-row{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.search-input{flex:1;min-width:180px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.15s;}
+.search-input:focus{border-color:var(--accent);}
+.soldier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:0;}
+.soldier-card{padding:20px 22px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;transition:background 0.15s;text-decoration:none;color:inherit;}
+.soldier-card--hidden{display:none!important;}
+.soldier-card:hover{background:var(--accent-light);}
+.soldier-card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);}
+.skill-row{display:flex;align-items:center;gap:6px;font-size:0.78rem;}
+.skill-label{color:var(--ink-muted);min-width:78px;font-size:0.75rem;}
+.skill-skulls{font-family:'Space Mono',monospace;font-size:0.9rem;letter-spacing:1px;color:var(--accent);}
+.skill-skulls .empty{color:var(--border);}
+.tags-row{display:flex;flex-wrap:wrap;gap:4px;}
+.tag{font-size:0.68rem;padding:2px 7px;border-radius:99px;border:1px solid var(--border);color:var(--ink-muted);background:var(--surface);}
+.soldier-goal{font-size:0.78rem;color:var(--ink-muted);border-top:1px solid var(--border);padding-top:8px;margin-top:2px;}
+.soldier-goal strong{color:var(--accent);font-weight:500;}
+.empty-state{padding:60px 24px;text-align:center;color:var(--ink-subtle);}
+.no-results{display:none;}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--ink-muted);text-decoration:none;margin-bottom:24px;transition:color 0.15s;}
+.back-link:hover{color:var(--accent);}
+.filter-row{padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-label{font-size:0.75rem;color:var(--ink-subtle);margin-right:4px;}
+.filter-btn{font-size:0.75rem;padding:3px 11px;border-radius:99px;border:1px solid var(--border);background:none;color:var(--ink-muted);cursor:pointer;text-decoration:none;transition:all 0.15s;white-space:nowrap;}
+.filter-btn:hover{border-color:var(--accent);color:var(--accent);}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.filter-sep{width:1px;height:18px;background:var(--border);align-self:center;margin:0 4px;}
+.inactive-badge{font-size:0.65rem;padding:1px 6px;border-radius:99px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);}
+</style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="page-shell">
+
+  <a href="{% url 'unifieduser:index' %}" class="back-link">← Portal</a>
+
+  <div class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Infantry Roster</span>
+  </div>
+  <p class="page-subtitle">Infantry skill ratings &amp; goal tracking</p>
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="dot"></span>
+      <h2>Soldiers</h2>
+      <span class="badge-count">{{ total }}</span>
+    </div>
+
+    <div class="search-row">
+      <input type="text" class="search-input" id="soldierSearch" placeholder="Search soldiers…" autocomplete="off">
+    </div>
+
+    {% if can_manage %}
+    <div class="filter-row">
+      <span class="filter-label">Status:</span>
+      <a class="filter-btn {% if status_filter == 'active' %}active{% endif %}" href="?status=active{% if active_group_pk %}&group={{ active_group_pk }}{% endif %}">Active</a>
+      <a class="filter-btn {% if status_filter == 'inactive' %}active{% endif %}" href="?status=inactive{% if active_group_pk %}&group={{ active_group_pk }}{% endif %}">Inactive</a>
+      <a class="filter-btn {% if status_filter == 'all' %}active{% endif %}" href="?status=all{% if active_group_pk %}&group={{ active_group_pk }}{% endif %}">All</a>
+      {% if group_filters %}
+      <span class="filter-sep"></span>
+      <span class="filter-label">Group:</span>
+      <a class="filter-btn {% if not active_group_pk %}active{% endif %}" href="?status={{ status_filter }}">All Groups</a>
+      {% for gf in group_filters %}
+      <a class="filter-btn {% if active_group_pk == gf.group.pk %}active{% endif %}" href="?status={{ status_filter }}&group={{ gf.group.pk }}">{{ gf.display_label }}</a>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if soldiers_data %}
+    <div class="soldier-grid" id="soldierGrid">
+      {% for row in soldiers_data %}
+      <a class="soldier-card" href="{% url 'infantryboard:detail' row.soldier.slug %}" data-name="{{ row.soldier.name|lower }}" title="View {{ row.soldier.name }}">
+
+        <div class="soldier-card-name">{{ row.soldier.name }}{% if not row.soldier.is_active %} <span class="inactive-badge">Inactive</span>{% endif %}</div>
+
+        {% if row.tag_labels %}
+        <div class="tags-row">
+          {% for label in row.tag_labels %}<span class="tag">{{ label }}</span>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+          <div class="skill-row">
+            <span class="skill-label">Aim</span>
+            <span class="skill-skulls">{% for i in "12345" %}{% if forloop.counter <= row.soldier.aim %}☠{% else %}<span class="empty">·</span>{% endif %}{% endfor %}</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-label">Teamplay</span>
+            <span class="skill-skulls">{% for i in "12345" %}{% if forloop.counter <= row.soldier.teamplay %}☠{% else %}<span class="empty">·</span>{% endif %}{% endfor %}</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-label">Comms</span>
+            <span class="skill-skulls">{% for i in "12345" %}{% if forloop.counter <= row.soldier.comms %}☠{% else %}<span class="empty">·</span>{% endif %}{% endfor %}</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-label">Tactics</span>
+            <span class="skill-skulls">{% for i in "12345" %}{% if forloop.counter <= row.soldier.tactics %}☠{% else %}<span class="empty">·</span>{% endif %}{% endfor %}</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-label">Leadership</span>
+            <span class="skill-skulls">{% for i in "12345" %}{% if forloop.counter <= row.soldier.leadership %}☠{% else %}<span class="empty">·</span>{% endif %}{% endfor %}</span>
+          </div>
+        </div>
+
+        {% if row.open_goal %}
+        <div class="soldier-goal">
+          <strong>Goal:</strong> {{ row.open_goal.title }}
+        </div>
+        {% endif %}
+
+      </a>
+      {% endfor %}
+    </div>
+    <div id="noResults" class="empty-state no-results">No soldiers match your search.</div>
+    {% else %}
+    <div class="empty-state">No soldiers in the roster yet.</div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<script data-cfasync="false">
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+
+var searchInput = document.getElementById('soldierSearch');
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    var cards = document.querySelectorAll('#soldierGrid .soldier-card');
+    var visible = 0;
+    cards.forEach(function(card) {
+      var match = !q || card.dataset.name.includes(q);
+      card.classList.toggle('soldier-card--hidden', !match);
+      if (match) visible++;
+    });
+    var noResults = document.getElementById('noResults');
+    if (noResults) noResults.classList.toggle('no-results', !(q && visible === 0));
+  });
+}
+</script>
+
+</body>
+</html>

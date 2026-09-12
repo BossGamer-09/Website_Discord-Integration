@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if post %}Edit · {{ post.title }}{% else %}New Article{% endif %} · Knowledge Base</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>
+  (function() {
+    var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+  </script>
+  <style>
+    :root {
+      --ink: #0f1117; --ink-muted: #4a4f5e; --ink-subtle: #9399a8;
+      --surface: #f7f8fc; --card-bg: #ffffff; --border: #e4e6ef;
+      --accent: #2563eb; --accent-light: #eff4ff; --accent-hover: #1d4ed8;
+      --danger: #dc2626; --radius: 14px;
+      --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.07);
+    }
+    [data-theme="dark"] {
+      --ink: #e8eaf0; --ink-muted: #8b91a6; --ink-subtle: #555c73;
+      --surface: #0d0f14; --card-bg: #161922; --border: #252836;
+      --accent: #3b82f6; --accent-light: #1a2540; --accent-hover: #60a5fa;
+      --danger: #f87171;
+      --shadow: 0 1px 4px rgba(0,0,0,0.4), 0 4px 24px rgba(0,0,0,0.5);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { background: var(--surface); font-family: 'DM Sans', sans-serif; color: var(--ink); margin: 0; transition: background .22s, color .18s; }
+
+    /* theme toggle */
+    .theme-toggle { position: fixed; top: 18px; right: 20px; z-index: 999; width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--card-bg); color: var(--ink-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: background .2s, border-color .2s, color .15s, transform .15s; }
+    .theme-toggle:hover { color: var(--ink); border-color: var(--accent); transform: scale(1.08); }
+    .theme-toggle .icon-sun { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+    /* layout */
+    .kb-shell { max-width: 680px; margin: 0 auto; padding: 48px 24px 100px; }
+
+    /* wordmark */
+    .page-wordmark { margin-bottom: 6px; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .bv-logo-img { height: 36px; width: 36px; object-fit: contain; border-radius: 8px; }
+    .bv-wm-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem; letter-spacing: -.02em; color: var(--ink); }
+    .bv-wm-sep { color: var(--ink-subtle); font-size: 1rem; font-weight: 300; }
+    .bv-wm-page { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; color: var(--accent); }
+
+    /* breadcrumb */
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--ink-subtle); margin-bottom: 24px; }
+    .breadcrumb a { color: var(--ink-muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb-sep { color: var(--ink-subtle); }
+
+    /* card */
+    .kb-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; animation: fadeUp .35s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+    /* card header */
+    .kb-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 16px; border-bottom: 1px solid var(--border); }
+    .kb-header-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--ink); display: flex; align-items: center; gap: 9px; }
+    .kb-header-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: .85rem; flex-shrink: 0; }
+    .kb-header-actions { display: flex; align-items: center; gap: 10px; }
+    .version-badge { font-size: .75rem; color: var(--ink-subtle); padding: 2px 8px; border: 1px solid var(--border); border-radius: 99px; }
+    .kb-action-link { font-size: .82rem; color: var(--ink-muted); text-decoration: none; }
+    .kb-action-link:hover { color: var(--accent); }
+
+    /* form body */
+    .kb-body { padding: 20px 22px; }
+    .sf-group { margin-bottom: 16px; }
+    .sf-label { display: block; font-size: .8rem; font-weight: 600; color: var(--ink-muted); margin-bottom: 5px; letter-spacing: .02em; }
+    .sf-label .req { color: var(--danger); }
+    .sf-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: 'DM Sans', sans-serif; font-size: .92rem; transition: border-color .15s, box-shadow .15s; }
+    .sf-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    textarea.sf-input { resize: vertical; min-height: 240px; font-family: monospace; font-size: .88rem; }
+    select.sf-input { cursor: pointer; appearance: auto; }
+    .sf-error { font-size: .75rem; color: var(--danger); margin-top: 4px; font-weight: 500; }
+    .sf-hint { font-size: .75rem; color: var(--ink-subtle); margin-top: 3px; }
+
+    /* two-col */
+    .kb-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media(max-width:500px) { .kb-meta-row { grid-template-columns: 1fr; } }
+
+    /* tag pills */
+    .tag-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag-pill input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .tag-pill label { display: inline-flex; align-items: center; padding: 5px 13px; border-radius: 99px; border: 1.5px solid var(--border); background: var(--surface); font-size: .8rem; font-weight: 500; cursor: pointer; color: var(--ink-muted); transition: all .15s; -webkit-user-select: none; user-select: none; }
+    .tag-pill label:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .tag-pill input[type="checkbox"]:checked + label { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+
+    /* footer */
+    .kb-footer { padding: 14px 22px 18px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 10px; align-items: center; }
+    .kb-submit { flex: 1; padding: 12px 20px; background: var(--accent); color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; border: none; border-radius: 9px; cursor: pointer; transition: background .15s; }
+    .kb-submit:hover { background: var(--accent-hover); }
+    .kb-cancel { font-size: .85rem; color: var(--ink-muted); text-decoration: none; padding: 8px 12px; border-radius: 8px; transition: color .15s, background .15s; }
+    .kb-cancel:hover { color: var(--ink); background: var(--accent-light); }
+
+    /* messages */
+    .messages { list-style: none; padding: 0; margin: 0 0 16px; }
+    .messages li { padding: 10px 14px; border-radius: 8px; font-size: .88rem; background: var(--accent-light); color: var(--accent); border: 1px solid var(--border); margin-bottom: 6px; }
+    .messages li.error { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+    [data-theme="dark"] .messages li.error { background: #2d1111; border-color: #7f1d1d; }
+  </style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="kb-shell">
+
+  <a href="/" class="page-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Knowledge Base</span>
+  </a>
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    {% if post %}
+      <span>Edit: {{ post.title }}</span>
+    {% else %}
+      <span>New Article</span>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+  <ul class="messages">{% for msg in messages %}<li class="{{ msg.tags }}">{{ msg }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="kb-card">
+
+      <div class="kb-header">
+        <div class="kb-header-title">
+          <div class="kb-header-icon">📖</div>
+          {% if post %}Edit Article{% else %}New Article{% endif %}
+        </div>
+        <div class="kb-header-actions">
+          {% if post %}
+            <span class="version-badge">v{{ post.version }}</span>
+            <a href="{% url 'discordwebcms:post_history' post.pk %}" class="kb-action-link">History</a>
+            {% if post.discord_message_id %}<span class="version-badge" title="Linked to live Discord message">Discord linked</span>{% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="kb-body">
+
+        <div class="sf-group">
+          <label class="sf-label" for="title">Title <span class="req">*</span></label>
+          <input type="text" class="sf-input" id="title" name="title" maxlength="200" required
+            value="{% if form_data.title %}{{ form_data.title }}{% elif post %}{{ post.title }}{% endif %}"
+            placeholder="Article title…">
+          {% if errors.title %}<div class="sf-error">{{ errors.title }}</div>{% endif %}
+        </div>
+
+        <div class="kb-meta-row">
+          <div class="sf-group">
+            <label class="sf-label" for="visibility">Visibility</label>
+            <select class="sf-input" id="visibility" name="visibility">
+              {% for val, label in visibility_choices %}
+              <option value="{{ val }}"
+                {% if form_data.visibility == val %}selected
+                {% elif post and post.visibility == val %}selected
+                {% elif not form_data and not post and val == 'PUBLIC' %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        {% if tags %}
+        <div class="sf-group">
+          <label class="sf-label">Tags</label>
+          <div class="tag-grid">
+            {% for tag in tags %}
+            <div class="tag-pill">
+              <input type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}"
+                {% if tag.id in selected_tag_ids %}checked{% endif %}>
+              <label for="tag_{{ tag.id }}">{{ tag.name }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="sf-group">
+          <label class="sf-label" for="text_content">Content (Markdown) <span class="req">*</span></label>
+          <textarea class="sf-input" id="text_content" name="text_content" required
+            placeholder="Write article content in Markdown…">{% if form_data.text_content %}{{ form_data.text_content }}{% elif first_entry %}{{ first_entry.text_content }}{% endif %}</textarea>
+          {% if errors.text_content %}<div class="sf-error">{{ errors.text_content }}</div>{% endif %}
+          <div class="sf-hint">Supports Markdown. Multi-entry / file uploads managed via Django Admin.</div>
+        </div>
+
+      </div>
+
+      <div class="kb-footer">
+        <button type="submit" class="kb-submit">{% if post %}Save Changes{% else %}Create Article{% endif %}</button>
+        <a href="/" class="kb-cancel">Cancel</a>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+</script>
+</body>
+</html>

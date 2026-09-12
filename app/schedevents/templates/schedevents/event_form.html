@@ -1,0 +1,1117 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if plan %}Edit {{ plan.title }}{% else %}New Event{% endif %} · Events{% endblock %}
+
+{% block content %}
+{% include "schedevents/_shared_css.html" %}
+<style>
+  /* ── Creator shell ── */
+  .sesh-shell { max-width:520px; margin:0 auto; padding:40px 20px 100px; }
+  .sesh-card  { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; animation:fadeUp .3s ease both; }
+
+  /* ── Header ── */
+  .sesh-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 16px; border-bottom:1px solid var(--border); }
+  .sesh-header-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--ink); display:flex; align-items:center; gap:9px; }
+  .sesh-header-icon  { width:28px; height:28px; background:var(--accent); border-radius:6px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; flex-shrink:0; }
+  .tpl-trigger { font-size:.78rem; font-weight:600; color:var(--accent); text-decoration:none; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; border:1px solid var(--accent-light); background:var(--accent-light); transition:all .15s; cursor:pointer; }
+  .tpl-trigger:hover { background:var(--accent); color:#fff; }
+
+  /* ── Core form body ── */
+  .sesh-body { padding:20px 22px 0; }
+
+  /* Field row */
+  .sf-group { margin-bottom:16px; }
+  .sf-label  { display:block; font-size:.8rem; font-weight:600; color:var(--ink-muted); margin-bottom:5px; letter-spacing:.02em; }
+  .sf-label .req { color:var(--danger); }
+  .sf-input  { width:100%; padding:9px 13px; border:1.5px solid var(--border); border-radius:8px; background:var(--surface); color:var(--ink); font-family:'DM Sans',sans-serif; font-size:.92rem; transition:border-color .15s, box-shadow .15s; }
+  .sf-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+  .sf-input::placeholder { color:var(--ink-subtle); }
+  .sf-input-title { font-size:1rem; padding:11px 14px; }
+  select.sf-input { cursor:pointer; }
+  textarea.sf-input { resize:vertical; min-height:88px; }
+  .sf-error { font-size:.75rem; color:var(--danger); margin-top:4px; font-weight:500; }
+  .sf-hint  { font-size:.75rem; color:var(--ink-subtle); margin-top:3px; }
+
+  /* Date+time inline */
+  .sf-datetime-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sf-datetime-row-tz { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+  /* Expand-reveal links */
+  .sf-reveal { display:inline-flex; align-items:center; gap:5px; font-size:.84rem; font-weight:500; color:var(--ink-muted); text-decoration:none; cursor:pointer; padding:2px 0; margin-bottom:12px; border:none; background:none; }
+  .sf-reveal:hover { color:var(--accent); }
+  .sf-reveal svg { transition:transform .2s; }
+  .sf-reveal.open svg { transform:rotate(45deg); }
+  .sf-reveal-content { display:none; }
+  .sf-reveal-content.open { display:block; }
+
+  /* Duration strip */
+  .sf-dur-strip { display:grid; grid-template-columns:1fr 120px; gap:10px; align-items:end; }
+  .sf-dur-strip .sf-group { margin-bottom:0; }
+
+  /* ── Divider ── */
+  .sesh-divider { height:1px; background:var(--border); margin:20px 0 0; }
+
+  /* ── Advanced tabs ── */
+  .adv-section { }
+  .adv-header { padding:14px 22px 0; }
+  .adv-label  { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-subtle); margin-bottom:10px; }
+  .adv-tabs { display:flex; gap:0; overflow-x:auto; border-bottom:1px solid var(--border); scrollbar-width:none; }
+  .adv-tabs::-webkit-scrollbar { display:none; }
+  .adv-tab { flex-shrink:0; padding:10px 16px; font-size:.8rem; font-weight:600; color:var(--ink-muted); border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; transition:color .15s, border-color .15s; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  .adv-tab:hover { color:var(--ink); }
+  .adv-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .adv-tab-icon { font-size:.85rem; }
+  .adv-panel { display:none; padding:18px 22px; }
+  .adv-panel.active { display:block; }
+
+  /* Inline sub-label */
+  .sf-server-default { font-size:.72rem; color:var(--ink-subtle); font-weight:400; margin-left:4px; }
+
+  /* Checkbox row */
+  .sf-check { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.88rem; color:var(--ink); margin-bottom:10px; }
+  .sf-check input { cursor:pointer; accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; }
+  .sf-check-desc { font-size:.78rem; color:var(--ink-subtle); margin-top:1px; }
+
+  /* Indicator options */
+  .ind-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+  .ind-opt { position:relative; }
+  .ind-opt input[type=radio] { position:absolute; opacity:0; width:0; height:0; }
+  .ind-opt label { display:flex; align-items:center; gap:7px; padding:8px 12px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); cursor:pointer; font-size:.82rem; font-weight:500; transition:all .15s; }
+  .ind-opt input:checked + label { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+  .ind-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+  /* Reminder pills */
+  .reminder-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .reminder-pill { display:flex; align-items:center; gap:5px; padding:5px 11px; border-radius:99px; border:1.5px solid var(--border); background:var(--surface); font-size:.8rem; cursor:pointer; transition:all .15s; }
+  .reminder-pill input { accent-color:var(--accent); }
+  .reminder-pill:has(input:checked) { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+
+  /* Mentions (ping) tri-column picker */
+  .mentions-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .mentions-col { display:flex; flex-direction:column; gap:6px; position:relative; }
+  .mentions-hidden { display:none; }
+  .mentions-hint-warn { color:#f0b968; }
+  @media (max-width: 560px) { .mentions-grid { grid-template-columns:1fr; } }
+
+  /* Emoji picker */
+  .emoji-input-wrap { display:flex; gap:4px; align-items:stretch; }
+  .emoji-input-wrap .sf-input { flex:1; min-width:0; }
+  .emoji-pick-btn { flex-shrink:0; padding:0 10px; border:1.5px solid var(--border); background:var(--surface); color:var(--ink); border-radius:8px; cursor:pointer; font-size:1rem; line-height:1; }
+  .emoji-pick-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .emoji-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:900; align-items:center; justify-content:center; padding:20px; }
+  .emoji-modal-backdrop.open { display:flex; }
+  .emoji-modal { background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px; max-width:520px; width:100%; max-height:70vh; display:flex; flex-direction:column; box-shadow:var(--shadow); }
+  .emoji-modal-head { padding:12px 14px; border-bottom:1.5px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .emoji-modal-head .sf-label { margin:0; font-size:.9rem; }
+  .emoji-modal-close { margin-left:auto; border:none; background:none; color:var(--ink-subtle); font-size:1.2rem; cursor:pointer; }
+  .emoji-modal-close:hover { color:var(--danger); }
+  .emoji-modal-search { padding:8px 12px; border-bottom:1.5px solid var(--border); }
+  .emoji-grid { padding:10px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(48px, 1fr)); gap:6px; }
+  .emoji-tile { aspect-ratio:1; border:1.5px solid transparent; border-radius:6px; background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:4px; transition:all .1s; }
+  .emoji-tile:hover { border-color:var(--accent); background:var(--accent-light); }
+  .emoji-tile img { max-width:100%; max-height:100%; object-fit:contain; }
+  .emoji-tab-row { display:flex; gap:4px; padding:0 10px 8px; flex-wrap:wrap; }
+  .emoji-tab { padding:4px 10px; border:1.5px solid var(--border); border-radius:99px; background:transparent; color:var(--ink-subtle); font-size:.78rem; cursor:pointer; }
+  .emoji-tab.active { border-color:var(--accent); background:var(--accent-light); color:var(--accent); font-weight:600; }
+  .emoji-empty { padding:20px; text-align:center; color:var(--ink-subtle); font-size:.88rem; }
+
+  /* RSVP emoji row */
+  .emoji-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+  /* Two-col */
+  .sf-two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media(max-width:480px) { .sf-two-col,.sf-datetime-row,.sf-datetime-row-tz,.emoji-row,.sf-dur-strip { grid-template-columns:1fr; } }
+
+  /* ── Footer ── */
+  .sesh-footer { padding:14px 22px 18px; border-top:1px solid var(--border); background:var(--surface); }
+  .sesh-tpl-save { display:block; font-size:.78rem; color:var(--ink-subtle); text-decoration:none; margin-bottom:12px; cursor:pointer; border:none; background:none; padding:0; }
+  .sesh-tpl-save:hover { color:var(--accent); text-decoration:underline; }
+  #template_name_group { display:none; margin-bottom:12px; }
+  .sesh-submit { width:100%; padding:12px 20px; background:var(--accent); color:#fff; font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; border:none; border-radius:9px; cursor:pointer; transition:background .15s, box-shadow .15s; letter-spacing:.01em; }
+  .sesh-submit:hover { background:var(--accent-hover); box-shadow:var(--shadow-hover); }
+
+  /* Utility classes replacing inline styles */
+  .sesh-wordmark  { margin-bottom:6px; }
+  .sesh-breadcrumb { margin-bottom:20px; }
+  .sesh-messages  { margin-bottom:16px; }
+  .sf-group-0     { margin-bottom:0; }
+  .sf-group-mt    { margin-top:14px; }
+  .sf-group-mt-sm { margin-top:10px; }
+  .sf-label-light { font-weight:400; }
+  .sf-two-col-end { align-items:end; }
+  .sf-color-row   { display:flex; align-items:center; gap:10px; }
+  .sf-color-input { width:48px !important; padding:4px !important; height:38px !important; cursor:pointer; }
+  .sf-color-label { font-size:.82rem; font-weight:600; color:var(--ink-muted); font-family:monospace; }
+  .sf-check-mt    { margin-top:4px; }
+  .sf-check-mb    { margin-bottom:14px; }
+  .sf-hint-mb     { margin-bottom:8px; }
+  .sf-discord-sync { font-size:.82rem; color:var(--ink-subtle); }
+
+  /* ── Eligibility role search widget ── */
+  #eligHidden { display:none; }
+  .elig-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:0; }
+  .elig-chip  { display:flex; align-items:center; gap:5px; padding:4px 10px; border-radius:99px; background:var(--accent-light); border:1.5px solid var(--accent); color:var(--accent); font-size:.8rem; font-weight:600; }
+  .elig-chip-remove { border:none; background:none; color:var(--accent); cursor:pointer; font-size:.9rem; line-height:1; padding:0 2px; }
+  .elig-chip-remove:hover { color:var(--danger); }
+  .elig-search-wrap { position:relative; }
+  .elig-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--card-bg); border:1.5px solid var(--accent); border-radius:8px; z-index:200; max-height:220px; overflow-y:auto; box-shadow:var(--shadow); }
+  .elig-dropdown.open { display:block; }
+  .elig-opt { padding:9px 13px; font-size:.88rem; cursor:pointer; color:var(--ink); }
+  .elig-opt:hover { background:var(--accent-light); color:var(--accent); }
+  .elig-opt.selected { color:var(--ink-subtle); cursor:default; }
+  .elig-opt-empty { padding:9px 13px; font-size:.84rem; color:var(--ink-subtle); }
+  .sf-input-mb    { margin-bottom:10px; }
+  #rrule_custom_group { display:none; }
+  .sesh-cancel-row  { margin-top:12px; text-align:center; }
+  .sesh-cancel-link { font-size:.82rem; }
+
+  /* ── Template overlay ── */
+  .tpl-overlay { display:none; position:fixed; inset:0; z-index:1000; }
+  .tpl-overlay.open { display:flex; }
+  .tpl-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+  .tpl-drawer { position:absolute; right:0; top:0; bottom:0; width:min(420px,100%); background:var(--card-bg); border-left:1px solid var(--border); display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(0,0,0,.2); animation:slideIn .22s ease; }
+  @keyframes slideIn { from{transform:translateX(100%)} to{transform:translateX(0)} }
+  .tpl-drawer-header { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .tpl-drawer-title { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:var(--ink); }
+  .tpl-close { border:none; background:none; font-size:1.2rem; color:var(--ink-muted); cursor:pointer; padding:4px 8px; border-radius:6px; }
+  .tpl-close:hover { background:var(--border); color:var(--ink); }
+  .tpl-search-row { padding:12px 20px; border-bottom:1px solid var(--border); }
+  .tpl-search { width:100%; padding:8px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:.88rem; background:var(--surface); color:var(--ink); }
+  .tpl-search:focus { outline:none; border-color:var(--accent); }
+  .tpl-drawer-body { flex:1; overflow-y:auto; padding:14px 20px; }
+  .tpl-section-title { font-size:.72rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-subtle); margin:8px 0 10px; }
+  .tpl-cards-grid { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+  .tpl-item { padding:11px 14px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); cursor:pointer; transition:all .15s; }
+  .tpl-item:hover { border-color:var(--accent); background:var(--accent-light); }
+  .tpl-item.selected { border-color:var(--accent); background:var(--accent-light); }
+  .tpl-item-name { font-weight:600; font-size:.88rem; color:var(--ink); margin-bottom:2px; }
+  .tpl-item-desc { font-size:.76rem; color:var(--ink-subtle); }
+  .tpl-empty { font-size:.85rem; color:var(--ink-subtle); text-align:center; padding:20px 0; }
+</style>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="sesh-shell">
+  <a href="{% url 'unifieduser:index' %}" class="page-wordmark sesh-wordmark">
+    <img src="{% static 'image/org/bvl-logo.webp' %}" alt="BlightVeil" class="bv-logo-img">
+    <span class="bv-wm-name">BlightVeil</span>
+    <span class="bv-wm-sep">›</span>
+    <span class="bv-wm-page">Events</span>
+  </a>
+  <div class="breadcrumb sesh-breadcrumb">
+    <a href="{% url 'unifieduser:index' %}">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="{% url 'schedevents:dashboard' %}">Events</a><span class="breadcrumb-sep">›</span>
+    {% if plan %}<a href="{% url 'schedevents:event_detail' plan.codename_id %}">{{ plan.codename_id }}</a><span class="breadcrumb-sep">›</span><span>Edit</span>
+    {% else %}<span>New Event</span>{% endif %}
+  </div>
+
+  {% if messages %}
+  <ul class="messages sesh-messages">{% for msg in messages %}<li class="{{ msg.tags }}">{{ msg }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <form method="post" id="eventForm">
+    {% csrf_token %}
+    <div class="sesh-card">
+
+      <!-- Header -->
+      <div class="sesh-header">
+        <div class="sesh-header-title">
+          <div class="sesh-header-icon">📅</div>
+          {% if plan %}Edit Event{% else %}Creating Event{% endif %}
+        </div>
+        {% if template_categories_json_obj %}
+        <button type="button" class="tpl-trigger" id="tplTrigger">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Template
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Core fields -->
+      <div class="sesh-body">
+
+        <!-- Title -->
+        <div class="sf-group">
+          <label class="sf-label" for="title">Event Title <span class="req">*</span></label>
+          <input type="text" class="sf-input sf-input-title" id="title" name="title" maxlength="200" required
+            value="{% if form_data.title %}{{ form_data.title }}{% elif plan %}{{ plan.title }}{% endif %}"
+            placeholder="ex: Minecraft">
+          {% if errors.title %}<div class="sf-error">{{ errors.title }}</div>{% endif %}
+        </div>
+
+        <!-- Start time + Timezone -->
+        <div class="sf-group">
+          <label class="sf-label">Start Time <span class="req">*</span></label>
+          <div class="sf-datetime-row-tz">
+            <input type="date" class="sf-input" id="date" name="date" required
+              value="{{ form_data.date|default:'' }}">
+            <input type="time" class="sf-input" id="time" name="time" required
+              value="{{ form_data.time|default:'' }}">
+            <select class="sf-input" id="timezone" name="timezone" aria-label="Timezone">
+              {% for tz in timezones %}
+              {% if form_data.timezone %}
+                <option value="{{ tz }}" {% if form_data.timezone == tz %}selected{% endif %}>{{ tz }}</option>
+              {% elif plan %}
+                <option value="{{ tz }}" {% if plan.timezone_name == tz %}selected{% endif %}>{{ tz }}</option>
+              {% else %}
+                <option value="{{ tz }}" {% if tz == 'UTC' %}selected{% endif %}>{{ tz }}</option>
+              {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          {% if errors.date %}<div class="sf-error">{{ errors.date }}</div>{% endif %}
+        </div>
+
+        <!-- Add Duration (reveal) -->
+        <button type="button" class="sf-reveal {% if form_data.duration and form_data.duration != '2h' or plan and plan.planned_duration %}open{% endif %}" id="durReveal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Duration
+        </button>
+        <div class="sf-reveal-content {% if form_data.duration and form_data.duration != '2h' or plan and plan.planned_duration %}open{% endif %}" id="durContent">
+          <div class="sf-group">
+            <label class="sf-label" for="duration">Duration</label>
+            <input type="text" class="sf-input" id="duration" name="duration" placeholder="e.g. 2h · 90m · 1h30m"
+              value="{{ form_data.duration|default:'' }}">
+            {% if errors.duration %}<div class="sf-error">{{ errors.duration }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Channel -->
+        <div class="sf-group">
+          <label class="sf-label" for="channel">
+            # Channel
+            <span class="sf-server-default">— defaults to server announcement channel</span>
+          </label>
+          <select class="sf-input" id="channel" name="announcement_channel_id">
+            <option value="">— Server Default —</option>
+            {% for ch in text_channels %}
+            <option value="{{ ch.channel_id }}"
+              {% if form_data.announcement_channel_id == ch.channel_id|stringformat:"s" %}selected
+              {% elif plan and plan.announcement_channel_override_id == ch.channel_id %}selected{% endif %}># {{ ch.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Add Description (reveal) -->
+        <button type="button" class="sf-reveal {% if form_data.description or plan and plan.description %}open{% endif %}" id="descReveal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Description
+        </button>
+        <div class="sf-reveal-content {% if form_data.description or plan and plan.description %}open{% endif %}" id="descContent">
+          <div class="sf-group">
+            <label class="sf-label" for="description">Description</label>
+            <textarea class="sf-input" id="description" name="description" rows="4" placeholder="Event details, rules, requirements…">{% if form_data.description %}{{ form_data.description }}{% elif plan %}{{ plan.description }}{% endif %}</textarea>
+          </div>
+        </div>
+
+        <!-- Add Location (reveal) -->
+        <button type="button" class="sf-reveal {% if form_data.location or plan and plan.location %}open{% endif %}" id="locReveal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Location
+        </button>
+        <div class="sf-reveal-content {% if form_data.location or plan and plan.location %}open{% endif %}" id="locContent">
+          <div class="sf-group">
+            <label class="sf-label" for="location">Location</label>
+            <input type="text" class="sf-input" id="location" name="location" maxlength="200"
+              value="{% if form_data.location %}{{ form_data.location }}{% elif plan %}{{ plan.location }}{% endif %}"
+              placeholder="e.g. Stanton, AC, Pyro System">
+          </div>
+        </div>
+
+      </div><!-- /sesh-body -->
+
+      <!-- Advanced section -->
+      <div class="sesh-divider"></div>
+      <div class="adv-section">
+        <div class="adv-tabs" role="tablist">
+          <button type="button" class="adv-tab active" data-tab="rsvps" role="tab">
+            <span class="adv-tab-icon">☑</span> RSVPs
+          </button>
+          <button type="button" class="adv-tab" data-tab="notifications" role="tab">
+            <span class="adv-tab-icon">🔔</span> Notifications
+          </button>
+          <button type="button" class="adv-tab" data-tab="appearance" role="tab">
+            <span class="adv-tab-icon">🎨</span> Appearance
+          </button>
+          <button type="button" class="adv-tab" data-tab="attendees" role="tab">
+            <span class="adv-tab-icon">👥</span> Attendees
+          </button>
+          <button type="button" class="adv-tab" data-tab="integrations" role="tab">
+            <span class="adv-tab-icon">🔗</span> Integrations
+          </button>
+          <button type="button" class="adv-tab" data-tab="repeat" role="tab">
+            <span class="adv-tab-icon">🔁</span> Repeat
+          </button>
+        </div>
+
+        <!-- RSVPs panel -->
+        <div class="adv-panel active" id="tab-rsvps">
+
+          <div class="sf-group">
+            <div class="sf-label">Event Type</div>
+            <div class="ind-grid">
+              {% for ind in indicators %}
+              <div class="ind-opt">
+                <input type="radio" name="indicator" id="ind_{{ ind.id }}" value="{{ ind.id }}"
+                  {% if plan and plan.indicator_id == ind.id %}checked{% elif not plan and forloop.first %}checked{% endif %}>
+                <label for="ind_{{ ind.id }}">
+                  <span class="ind-dot" style="background:{{ ind.color_hex }};"></span>
+                  {{ ind.prefix }} {{ ind.name }}
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+            {% if errors.indicator %}<div class="sf-error">{{ errors.indicator }}</div>{% endif %}
+          </div>
+
+          <div class="sf-group">
+            <div class="sf-label">RSVP Emojis <span class="sf-server-default">— click 😀 to pick a server emoji</span></div>
+            <div class="emoji-row">
+              <div class="sf-group sf-group-0">
+                <label class="sf-label sf-label-light" for="emoji_going">Going</label>
+                <div class="emoji-input-wrap">
+                  <input type="text" class="sf-input" id="emoji_going" name="emoji_going" maxlength="64"
+                    value="{% if form_data.emoji_going %}{{ form_data.emoji_going }}{% elif plan %}{{ plan.emoji_going }}{% else %}✅{% endif %}" placeholder="✅">
+                  <button type="button" class="emoji-pick-btn" data-emoji-target="emoji_going" aria-label="Pick server emoji">😀</button>
+                </div>
+              </div>
+              <div class="sf-group sf-group-0">
+                <label class="sf-label sf-label-light" for="emoji_maybe">Maybe</label>
+                <div class="emoji-input-wrap">
+                  <input type="text" class="sf-input" id="emoji_maybe" name="emoji_maybe" maxlength="64"
+                    value="{% if form_data.emoji_maybe %}{{ form_data.emoji_maybe }}{% elif plan %}{{ plan.emoji_maybe }}{% else %}❓{% endif %}" placeholder="❓">
+                  <button type="button" class="emoji-pick-btn" data-emoji-target="emoji_maybe" aria-label="Pick server emoji">😀</button>
+                </div>
+              </div>
+              <div class="sf-group sf-group-0">
+                <label class="sf-label sf-label-light" for="emoji_not_going">Decline</label>
+                <div class="emoji-input-wrap">
+                  <input type="text" class="sf-input" id="emoji_not_going" name="emoji_not_going" maxlength="64"
+                    value="{% if form_data.emoji_not_going %}{{ form_data.emoji_not_going }}{% elif plan %}{{ plan.emoji_not_going }}{% else %}❌{% endif %}" placeholder="❌">
+                  <button type="button" class="emoji-pick-btn" data-emoji-target="emoji_not_going" aria-label="Pick server emoji">😀</button>
+                </div>
+              </div>
+            </div>
+            <div class="sf-hint">Type a Unicode emoji, or click 😀 to pick from this server's custom emojis.</div>
+          </div>
+
+          {# Guild emoji picker modal #}
+          <div class="emoji-modal-backdrop" id="emojiPickerModal" role="dialog" aria-modal="true">
+            <div class="emoji-modal">
+              <div class="emoji-modal-head">
+                <div class="sf-label">Pick a Server Emoji</div>
+                <button type="button" class="emoji-modal-close" aria-label="Close">✕</button>
+              </div>
+              <div class="emoji-modal-search">
+                <input type="text" class="sf-input" id="emojiPickerSearch" placeholder="Search emojis…" autocomplete="off">
+              </div>
+              <div class="emoji-tab-row">
+                <button type="button" class="emoji-tab active" data-emoji-tab="all">All</button>
+                <button type="button" class="emoji-tab" data-emoji-tab="static">Static</button>
+                <button type="button" class="emoji-tab" data-emoji-tab="animated">Animated</button>
+              </div>
+              <div class="emoji-grid" id="emojiPickerGrid"></div>
+            </div>
+          </div>
+          {{ guild_emojis|json_script:"guild-emojis-data" }}
+
+          <div class="sf-two-col">
+            <div class="sf-group">
+              <label class="sf-label" for="capacity">Capacity <span class="sf-server-default">optional</span></label>
+              <input type="number" class="sf-input" id="capacity" name="capacity" min="1"
+                value="{% if form_data.capacity %}{{ form_data.capacity }}{% elif plan and plan.capacity %}{{ plan.capacity }}{% endif %}" placeholder="Unlimited">
+              {% if errors.capacity %}<div class="sf-error">{{ errors.capacity }}</div>{% endif %}
+            </div>
+            <div class="sf-group">
+              <label class="sf-label" for="rsvp_deadline">RSVP Deadline <span class="sf-server-default">optional</span></label>
+              <input type="datetime-local" class="sf-input" id="rsvp_deadline" name="rsvp_deadline"
+                value="{{ form_data.rsvp_deadline|default:'' }}">
+            </div>
+          </div>
+
+          <label class="sf-check">
+            <input type="checkbox" name="waitlist_enabled" value="1"
+              {% if form_data.waitlist_enabled %}checked{% elif plan and plan.waitlist_enabled %}checked{% endif %}>
+            Enable waitlist when full
+          </label>
+
+          {% if discord_roles %}
+          <div class="sf-group sf-group-mt" id="eligibilityWidget">
+            <div class="sf-label">RSVP Eligibility <span class="sf-server-default">— restrict to specific roles</span></div>
+            <div class="sf-hint sf-hint-mb">Leave empty to allow anyone to RSVP.</div>
+            <!-- Selected role chips -->
+            <div class="elig-chips" id="eligChips"></div>
+            <!-- Search input -->
+            <div class="elig-search-wrap">
+              <input type="text" class="sf-input" id="eligSearch" placeholder="Search roles to add…" autocomplete="off">
+              <div class="elig-dropdown" id="eligDropdown"></div>
+            </div>
+            <!-- Hidden checkboxes carrying submitted values (managed by JS) -->
+            <div id="eligHidden">
+              {% for role in discord_roles %}
+              <input type="checkbox" name="eligible_roles" value="{{ role.role_id }}" class="elig-cb"
+                data-name="{{ role.name|default:role.role_id }}"
+                {% if role.role_id|stringformat:"s" in form_data.eligible_roles %}checked
+                {% elif role.role_id in selected_role_ids %}checked{% endif %}>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /tab-rsvps -->
+
+        <!-- Notifications panel -->
+        <div class="adv-panel" id="tab-notifications">
+          <div class="sf-group">
+            <div class="sf-label">Reminders <span class="sf-server-default">— send DM before event</span></div>
+            <div class="reminder-row">
+              {% for val, label in reminder_choices %}
+              <label class="reminder-pill">
+                <input type="checkbox" name="reminders" value="{{ val }}"
+                  {% if val|stringformat:"s" in selected_reminders %}checked{% endif %}>
+                {{ label }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="sf-group sf-group-mt">
+            <div class="sf-label">Ping Roles <span class="sf-server-default">— mention roles on key moments</span></div>
+            <div class="sf-hint sf-hint-mb">Each column picks roles to @mention at that moment. Leave empty to skip.</div>
+
+            {% if discord_roles %}
+            <div class="mentions-grid">
+              {% for col in mention_columns %}
+              <div class="mentions-col mention-widget" data-mention-field="{{ col.field }}">
+                <div class="sf-label sf-label-light">{{ col.label }}</div>
+                <div class="elig-chips" data-role="chips"></div>
+                <div class="elig-search-wrap">
+                  <input type="text" class="sf-input" placeholder="Search roles…" autocomplete="off" data-role="search">
+                  <div class="elig-dropdown" data-role="dropdown"></div>
+                </div>
+                <div class="mentions-hidden" data-role="hidden">
+                  {% for role in discord_roles %}
+                  <input type="checkbox" name="{{ col.field }}" value="{{ role.role_id }}" class="mention-cb"
+                    data-name="{{ role.name|default:role.role_id }}"
+                    {% if role.role_id|stringformat:"s" in col.selected %}checked{% endif %}>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="sf-hint sf-hint-mb mentions-hint-warn">
+              No Discord roles synced yet. Run the role sync to populate the picker.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="sf-two-col">
+            <div class="sf-group">
+              <label class="sf-label" for="thread_start_message_type">Start Message</label>
+              <select class="sf-input" id="thread_start_message_type" name="thread_start_message_type">
+                <option value="Thread" {% if plan and plan.thread_start_message_type == 'Thread' or not plan %}selected{% endif %}>Post in thread</option>
+                <option value="Channel" {% if plan and plan.thread_start_message_type == 'Channel' %}selected{% endif %}>Post in channel</option>
+                <option value="None" {% if plan and plan.thread_start_message_type == 'None' %}selected{% endif %}>None</option>
+              </select>
+            </div>
+            <div class="sf-group">
+              <label class="sf-label" for="thread_auto_archive_duration">Thread Auto-Archive</label>
+              <select class="sf-input" id="thread_auto_archive_duration" name="thread_auto_archive_duration">
+                {% for val, label in thread_archive_choices %}
+                <option value="{{ val }}"
+                  {% if form_data.thread_auto_archive_duration == val %}selected
+                  {% elif plan and plan.thread_auto_archive_duration == val %}selected
+                  {% elif not form_data.thread_auto_archive_duration and not plan and val == 'OneDay' %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="sf-group">
+            <label class="sf-label" for="thread_title_template">Thread Title Template</label>
+            <input type="text" class="sf-input" id="thread_title_template" name="thread_title_template" maxlength="200"
+              value="{% if form_data.thread_title_template %}{{ form_data.thread_title_template }}{% elif plan %}{{ plan.thread_title_template }}{% else %}$EventName{% endif %}"
+              placeholder="$EventName">
+            <div class="sf-hint">Supports <code>$EventName</code></div>
+          </div>
+        </div><!-- /tab-notifications -->
+
+        <!-- Appearance panel -->
+        <div class="adv-panel" id="tab-appearance">
+          <div class="sf-two-col sf-two-col-end">
+            <div class="sf-group sf-group-0">
+              <label class="sf-label" for="color_hex">Color <span class="sf-server-default">— Server Default</span></label>
+              <div class="sf-color-row">
+                <input type="color" class="sf-input sf-color-input" id="color_hex" name="color_hex"
+                  value="{% if form_data.color_hex %}{{ form_data.color_hex }}{% elif plan and plan.color_hex %}{{ plan.color_hex }}{% else %}#5865F2{% endif %}">
+                <span id="colorHexLabel" class="sf-color-label">#5865F2</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sf-group sf-group-mt">
+            <label class="sf-label" for="cover_image_url">Image <span class="sf-server-default">optional</span></label>
+            <input type="url" class="sf-input" id="cover_image_url" name="cover_image_url"
+              value="{% if form_data.cover_image_url %}{{ form_data.cover_image_url }}{% elif plan %}{{ plan.cover_image_url }}{% endif %}" placeholder="Image URL…">
+          </div>
+
+          <label class="sf-check">
+            <input type="checkbox" name="hide_attendees" value="1"
+              {% if form_data.hide_attendees %}checked{% elif plan and plan.hide_attendees %}checked{% endif %}>
+            Hide Attendee Names on Embed
+            <span class="sf-server-default">— Server Default</span>
+          </label>
+        </div><!-- /tab-appearance -->
+
+        <!-- Attendees panel -->
+        <div class="adv-panel" id="tab-attendees">
+          <label class="sf-check">
+            <input type="checkbox" id="auto_generate_vc" name="auto_generate_vc" value="1"
+              {% if form_data.auto_generate_vc %}checked{% elif plan and plan.auto_generate_vc %}checked{% endif %}>
+            Auto-generate event voice channel
+          </label>
+
+          <div class="sf-group sf-group-mt-sm" id="vc_profile_group">
+            <label class="sf-label" for="vc_profile">VC Profile <span class="sf-server-default">— Server Default</span></label>
+            <select class="sf-input" id="vc_profile" name="vc_profile">
+              <option value="">— Default —</option>
+              {% for profile in vc_profiles %}
+              <option value="{{ profile.pk }}"
+                {% if form_data.vc_profile == profile.pk|stringformat:"s" %}selected
+                {% elif plan and plan.vc_profile_id == profile.pk %}selected{% endif %}>{{ profile.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <label class="sf-check sf-check-mt">
+            <input type="checkbox" id="private_thread" name="private_thread" value="1"
+              {% if form_data.private_thread %}checked{% elif plan and plan.private_thread %}checked{% endif %}>
+            Private attendee thread
+            <span class="sf-server-default">— Only visible to RSVP'd members</span>
+          </label>
+
+          <label class="sf-check">
+            <input type="checkbox" name="thread_join_on_rsvp" value="1"
+              {% if form_data.thread_join_on_rsvp %}checked
+              {% elif plan and plan.thread_join_on_rsvp %}checked
+              {% elif not plan %}checked{% endif %}>
+            Auto-add members to thread on RSVP
+          </label>
+        </div><!-- /tab-attendees -->
+
+        <!-- Integrations panel -->
+        <div class="adv-panel" id="tab-integrations">
+          {% if can_publish %}
+          <label class="sf-check sf-check-mb">
+            <input type="checkbox" name="auto_publish" value="1"
+              {% if form_data.auto_publish %}checked{% endif %}>
+            Publish immediately after saving
+          </label>
+          {% endif %}
+
+          <div class="sf-group">
+            <div class="sf-label">Discord Sync</div>
+            <div class="sf-discord-sync">
+              When published, a Discord scheduled event will be created automatically in your server.
+            </div>
+          </div>
+        </div><!-- /tab-integrations -->
+
+        <!-- Repeat panel -->
+        <div class="adv-panel" id="tab-repeat">
+          <div class="sf-group">
+            <label class="sf-label" for="recurring_preset">Timezone <span class="sf-server-default">— {{ form_data.timezone|default:"UTC" }}</span></label>
+            <label class="sf-label" for="recurring_preset">Repeat</label>
+            <select class="sf-input" id="recurring_preset" name="recurring_preset">
+              <option value="">Does not repeat</option>
+              <option value="FREQ=DAILY" {% if form_data.recurring_preset == 'FREQ=DAILY' %}selected{% endif %}>Daily</option>
+              <option value="FREQ=WEEKLY" {% if form_data.recurring_preset == 'FREQ=WEEKLY' %}selected{% endif %}>Weekly</option>
+              <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR" {% if form_data.recurring_preset == 'FREQ=WEEKLY;BYDAY=MO,WE,FR' %}selected{% endif %}>Mon / Wed / Fri</option>
+              <option value="FREQ=BIWEEKLY" {% if form_data.recurring_preset == 'FREQ=BIWEEKLY' %}selected{% endif %}>Every 2 weeks</option>
+              <option value="FREQ=MONTHLY" {% if form_data.recurring_preset == 'FREQ=MONTHLY' %}selected{% endif %}>Monthly</option>
+              <option value="custom" {% if form_data.recurring_preset == 'custom' %}selected{% elif plan and plan.recurring_rule and not form_data.recurring_preset %}selected{% endif %}>Custom RRULE…</option>
+            </select>
+          </div>
+
+          <div class="sf-group" id="rrule_custom_group">
+            <label class="sf-label" for="recurring_rule">RFC 5545 RRULE</label>
+            <input type="text" class="sf-input" id="recurring_rule" name="recurring_rule"
+              value="{% if form_data.recurring_rule %}{{ form_data.recurring_rule }}{% elif plan and plan.recurring_rule %}{{ plan.recurring_rule }}{% endif %}"
+              placeholder="FREQ=WEEKLY;BYDAY=SA;COUNT=8">
+            <div class="sf-hint">Standard iCal recurrence rule.</div>
+          </div>
+
+          <label class="sf-check">
+            <input type="checkbox" name="allow_maintain_rsvp" value="1"
+              {% if form_data.allow_maintain_rsvp %}checked{% elif plan and plan.allow_maintain_rsvp %}checked{% endif %}>
+            Carry RSVPs forward when this event repeats
+          </label>
+        </div><!-- /tab-repeat -->
+
+      </div><!-- /adv-section -->
+
+      <!-- Footer -->
+      <div class="sesh-footer">
+        <button type="button" class="sesh-tpl-save" id="saveTplToggle">
+          + Save Current Settings as Template
+        </button>
+        <div id="template_name_group">
+          <label class="sf-label" for="template_name">Template Name</label>
+          <input type="text" class="sf-input sf-input-mb" id="template_name" name="template_name" maxlength="200"
+            value="{% if plan %}{{ plan.title }}{% endif %}" placeholder="e.g. Weekly Raid Night">
+          <input type="hidden" name="save_as_template" id="save_as_template_hidden" value="">
+        </div>
+        <button type="submit" class="sesh-submit" id="submitBtn">
+          {% if plan %}Save Changes{% else %}Create Event{% if text_channels %} in <span id="submitChannel">#…</span>{% endif %}{% endif %}
+        </button>
+      </div>
+
+    </div><!-- /sesh-card -->
+  </form>
+
+  <div class="sesh-cancel-row">
+    <a href="{% if plan %}{% url 'schedevents:event_detail' plan.codename_id %}{% else %}{% url 'schedevents:dashboard' %}{% endif %}" class="link-accent sesh-cancel-link">← Cancel</a>
+  </div>
+</div>
+
+<!-- Template overlay drawer -->
+<div class="tpl-overlay" id="tplOverlay">
+  <div class="tpl-backdrop" id="tplBackdrop"></div>
+  <div class="tpl-drawer">
+    <div class="tpl-drawer-header">
+      <span class="tpl-drawer-title">Event Templates</span>
+      <button type="button" class="tpl-close" id="tplClose">✕</button>
+    </div>
+    <div class="tpl-search-row">
+      <input type="text" class="tpl-search" id="tplSearch" placeholder="Search by name">
+    </div>
+    <div class="tpl-drawer-body" id="tplBody"></div>
+  </div>
+</div>
+
+{{ template_categories_json_obj|json_script:"tpl-categories-data" }}
+
+<script>
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+});
+
+// ── Reveal toggles ──
+function initReveal(btnId, contentId) {
+  var btn = document.getElementById(btnId);
+  var content = document.getElementById(contentId);
+  if (!btn || !content) return;
+  btn.addEventListener('click', function() {
+    var open = content.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    var svg = btn.querySelector('svg');
+    if (svg) svg.style.transform = open ? 'rotate(45deg)' : '';
+    if (open) {
+      var first = content.querySelector('input,textarea,select');
+      if (first) first.focus();
+    }
+  });
+  // Sync initial SVG state
+  if (btn.classList.contains('open')) {
+    var svg = btn.querySelector('svg');
+    if (svg) svg.style.transform = 'rotate(45deg)';
+  }
+}
+initReveal('durReveal', 'durContent');
+initReveal('descReveal', 'descContent');
+initReveal('locReveal', 'locContent');
+
+// ── Advanced tabs ──
+var tabs = document.querySelectorAll('.adv-tab');
+var panels = document.querySelectorAll('.adv-panel');
+tabs.forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    var id = 'tab-' + tab.dataset.tab;
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    panels.forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    var panel = document.getElementById(id);
+    if (panel) panel.classList.add('active');
+  });
+});
+
+// ── VC profile show/hide ──
+var vcCheck = document.getElementById('auto_generate_vc');
+var vcGroup = document.getElementById('vc_profile_group');
+function updateVc() { if (vcGroup) vcGroup.style.display = vcCheck && vcCheck.checked ? '' : 'none'; }
+if (vcCheck) { vcCheck.addEventListener('change', updateVc); updateVc(); }
+
+// ── Custom RRULE show/hide ──
+var presetSel = document.getElementById('recurring_preset');
+var rruleGroup = document.getElementById('rrule_custom_group');
+function updateRrule() { if (rruleGroup) rruleGroup.style.display = presetSel && presetSel.value === 'custom' ? '' : 'none'; }
+if (presetSel) { presetSel.addEventListener('change', updateRrule); updateRrule(); }
+
+// ── Color label update ──
+var colorInput = document.getElementById('color_hex');
+var colorLabel = document.getElementById('colorHexLabel');
+if (colorInput && colorLabel) {
+  colorLabel.textContent = colorInput.value;
+  colorInput.addEventListener('input', function() { colorLabel.textContent = colorInput.value; });
+}
+
+// ── Channel → submit button label ──
+var channelSel = document.getElementById('channel');
+var submitChannel = document.getElementById('submitChannel');
+function updateSubmitLabel() {
+  if (!channelSel || !submitChannel) return;
+  var opt = channelSel.options[channelSel.selectedIndex];
+  if (opt && opt.value) {
+    submitChannel.textContent = opt.text.trim();
+  } else {
+    submitChannel.textContent = '#…';
+  }
+}
+if (channelSel) { channelSel.addEventListener('change', updateSubmitLabel); updateSubmitLabel(); }
+
+// ── Save as template toggle ──
+var saveTplToggle = document.getElementById('saveTplToggle');
+var tplNameGroup = document.getElementById('template_name_group');
+var saveTplHidden = document.getElementById('save_as_template_hidden');
+if (saveTplToggle) {
+  saveTplToggle.addEventListener('click', function() {
+    var open = tplNameGroup.style.display === 'block';
+    tplNameGroup.style.display = open ? 'none' : 'block';
+    saveTplHidden.value = open ? '' : '1';
+    saveTplToggle.textContent = open ? '+ Save Current Settings as Template' : '− Remove Template';
+  });
+}
+
+// ── Template overlay ──
+(function() {
+  var rawEl = document.getElementById('tpl-categories-data');
+  var raw = [];
+  try { raw = rawEl ? JSON.parse(rawEl.textContent) : []; } catch (e) { raw = []; }
+  var trigger  = document.getElementById('tplTrigger');
+  var overlay  = document.getElementById('tplOverlay');
+  var backdrop = document.getElementById('tplBackdrop');
+  var closeBtn = document.getElementById('tplClose');
+  var body     = document.getElementById('tplBody');
+  var search   = document.getElementById('tplSearch');
+  if (!trigger || !overlay) return;
+
+  // Flatten templates for search
+  var allTpls = [];
+  raw.forEach(function(pair) {
+    var cat = pair[0];
+    (pair[1].templates || []).forEach(function(t) {
+      allTpls.push({ cat: cat, tpl: t });
+    });
+  });
+
+  function openOverlay() { overlay.classList.add('open'); renderAll(''); if (search) search.value = ''; }
+  function closeOverlay() { overlay.classList.remove('open'); }
+
+  trigger.addEventListener('click', openOverlay);
+  closeBtn.addEventListener('click', closeOverlay);
+  backdrop.addEventListener('click', closeOverlay);
+  if (search) search.addEventListener('input', function() { renderAll(this.value.toLowerCase()); });
+
+  function renderAll(q) {
+    body.innerHTML = '';
+    var grouped = {};
+    allTpls.forEach(function(item) {
+      if (q && item.tpl.name.toLowerCase().indexOf(q) === -1) return;
+      if (!grouped[item.cat]) grouped[item.cat] = [];
+      grouped[item.cat].push(item.tpl);
+    });
+    var keys = Object.keys(grouped);
+    if (!keys.length) {
+      body.innerHTML = '<div class="tpl-empty">No templates found.</div>';
+      return;
+    }
+    keys.forEach(function(cat) {
+      var sec = document.createElement('div');
+      sec.innerHTML = '<div class="tpl-section-title">' + cat + '</div>';
+      var grid = document.createElement('div');
+      grid.className = 'tpl-cards-grid';
+      grouped[cat].forEach(function(tpl) {
+        var item = document.createElement('div');
+        item.className = 'tpl-item';
+        item.innerHTML = '<div class="tpl-item-name">' + tpl.name + '</div>' +
+          (tpl.description ? '<div class="tpl-item-desc">' + tpl.description + '</div>' : '');
+        item.addEventListener('click', function() {
+          applyTemplate(tpl);
+          document.querySelectorAll('.tpl-item').forEach(function(i) { i.classList.remove('selected'); });
+          item.classList.add('selected');
+          setTimeout(closeOverlay, 200);
+        });
+        grid.appendChild(item);
+      });
+      sec.appendChild(grid);
+      body.appendChild(sec);
+    });
+  }
+
+  function applyTemplate(tpl) {
+    var f = function(sel) { return document.querySelector('[name="' + sel + '"]'); };
+    var titleField = document.getElementById('title');
+    if (titleField && tpl.name) titleField.value = tpl.name;
+    if (tpl.indicator_id) {
+      var radio = document.getElementById('ind_' + tpl.indicator_id);
+      if (radio) radio.checked = true;
+    }
+    if (tpl.default_duration_seconds) {
+      var h = Math.floor(tpl.default_duration_seconds / 3600);
+      var m = Math.floor((tpl.default_duration_seconds % 3600) / 60);
+      var ds = document.getElementById('duration');
+      if (ds) {
+        ds.value = (h && m) ? h + 'h' + m + 'm' : h ? h + 'h' : m + 'm';
+        // Open duration reveal
+        document.getElementById('durContent').classList.add('open');
+        document.getElementById('durReveal').classList.add('open');
+        var svg = document.getElementById('durReveal').querySelector('svg');
+        if (svg) svg.style.transform = 'rotate(45deg)';
+      }
+    }
+    var descText = tpl.default_description || tpl.description;
+    if (descText) {
+      var desc = f('description');
+      if (desc) {
+        desc.value = descText;
+        document.getElementById('descContent').classList.add('open');
+        document.getElementById('descReveal').classList.add('open');
+      }
+    }
+    if (f('capacity')) f('capacity').value = tpl.default_capacity || '';
+    var avc = document.getElementById('auto_generate_vc');
+    if (avc) { avc.checked = !!tpl.auto_generate_vc; updateVc(); }
+    var pt = document.getElementById('private_thread');
+    if (pt) pt.checked = !!tpl.private_thread;
+    var vcp = document.getElementById('vc_profile');
+    if (vcp) vcp.value = tpl.vc_profile_id || '';
+    if (tpl.location && f('location')) {
+      f('location').value = tpl.location;
+      document.getElementById('locContent').classList.add('open');
+      document.getElementById('locReveal').classList.add('open');
+    }
+    if (f('cover_image_url')) f('cover_image_url').value = tpl.cover_image_url || '';
+    if (f('color_hex') && tpl.color_hex) {
+      f('color_hex').value = tpl.color_hex;
+      if (colorLabel) colorLabel.textContent = tpl.color_hex;
+    }
+    if (f('hide_attendees')) f('hide_attendees').checked = !!tpl.hide_attendees;
+    if (f('allow_maintain_rsvp')) f('allow_maintain_rsvp').checked = !!tpl.allow_maintain_rsvp;
+    if (f('emoji_going')) f('emoji_going').value = tpl.emoji_going || '✅';
+    if (f('emoji_maybe')) f('emoji_maybe').value = tpl.emoji_maybe || '❓';
+    if (f('emoji_not_going')) f('emoji_not_going').value = tpl.emoji_not_going || '❌';
+    if (f('thread_title_template')) f('thread_title_template').value = tpl.thread_title_template || '$EventName';
+    if (f('thread_auto_archive_duration') && tpl.thread_auto_archive_duration)
+      f('thread_auto_archive_duration').value = tpl.thread_auto_archive_duration;
+    if (f('thread_join_on_rsvp')) f('thread_join_on_rsvp').checked = tpl.thread_join_on_rsvp !== false;
+    // Switch to RSVPs tab to show applied settings
+    document.querySelectorAll('.adv-tab')[0].click();
+  }
+})();
+
+// ── Eligibility role search widget ──
+(function() {
+  var widget   = document.getElementById('eligibilityWidget');
+  if (!widget) return;
+  var search   = document.getElementById('eligSearch');
+  var dropdown = document.getElementById('eligDropdown');
+  var chips    = document.getElementById('eligChips');
+  var cbs      = Array.from(document.querySelectorAll('.elig-cb'));
+
+  function roleName(cb) { return cb.dataset.name || cb.value; }
+
+  function renderChips() {
+    chips.innerHTML = '';
+    cbs.filter(function(cb) { return cb.checked; }).forEach(function(cb) {
+      var chip = document.createElement('span');
+      chip.className = 'elig-chip';
+      chip.innerHTML = '<span>' + roleName(cb) + '</span><button type="button" class="elig-chip-remove" aria-label="Remove">✕</button>';
+      chip.querySelector('button').addEventListener('click', function() {
+        cb.checked = false;
+        renderChips();
+        renderDropdown(search.value);
+      });
+      chips.appendChild(chip);
+    });
+  }
+
+  function renderDropdown(q) {
+    q = (q || '').toLowerCase();
+    dropdown.innerHTML = '';
+    var matches = cbs.filter(function(cb) {
+      return !q || roleName(cb).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!matches.length) {
+      dropdown.innerHTML = '<div class="elig-opt-empty">No roles found.</div>';
+    } else {
+      matches.forEach(function(cb) {
+        var opt = document.createElement('div');
+        opt.className = 'elig-opt' + (cb.checked ? ' selected' : '');
+        opt.textContent = roleName(cb) + (cb.checked ? ' ✓' : '');
+        opt.addEventListener('mousedown', function(e) {
+          e.preventDefault(); // keep focus on input
+          if (cb.checked) { cb.checked = false; } else { cb.checked = true; search.value = ''; }
+          renderChips();
+          renderDropdown(search.value);
+        });
+        dropdown.appendChild(opt);
+      });
+    }
+    dropdown.classList.add('open');
+  }
+
+  search.addEventListener('input', function() { renderDropdown(this.value); });
+  search.addEventListener('focus', function() { renderDropdown(this.value); });
+  document.addEventListener('click', function(e) {
+    if (!widget.contains(e.target)) { dropdown.classList.remove('open'); }
+  });
+
+  renderChips();
+})();
+
+// ── Mention role picker widgets (publish / start / vc unlock) ──
+(function() {
+  document.querySelectorAll('.mention-widget').forEach(function(widget) {
+    var chips    = widget.querySelector('[data-role="chips"]');
+    var search   = widget.querySelector('[data-role="search"]');
+    var dropdown = widget.querySelector('[data-role="dropdown"]');
+    var cbs      = Array.from(widget.querySelectorAll('.mention-cb'));
+
+    function roleName(cb) { return cb.dataset.name || cb.value; }
+
+    function renderChips() {
+      chips.innerHTML = '';
+      cbs.filter(function(cb) { return cb.checked; }).forEach(function(cb) {
+        var chip = document.createElement('span');
+        chip.className = 'elig-chip';
+        chip.innerHTML = '<span></span><button type="button" class="elig-chip-remove" aria-label="Remove">✕</button>';
+        chip.firstChild.textContent = roleName(cb);
+        chip.querySelector('button').addEventListener('click', function() {
+          cb.checked = false;
+          renderChips();
+          renderDropdown(search.value);
+        });
+        chips.appendChild(chip);
+      });
+    }
+
+    function renderDropdown(q) {
+      q = (q || '').toLowerCase();
+      dropdown.innerHTML = '';
+      var matches = cbs.filter(function(cb) {
+        return !q || roleName(cb).toLowerCase().indexOf(q) !== -1;
+      });
+      if (!matches.length) {
+        dropdown.innerHTML = '<div class="elig-opt-empty">No roles found.</div>';
+      } else {
+        matches.forEach(function(cb) {
+          var opt = document.createElement('div');
+          opt.className = 'elig-opt' + (cb.checked ? ' selected' : '');
+          opt.textContent = roleName(cb) + (cb.checked ? ' ✓' : '');
+          opt.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            cb.checked = !cb.checked;
+            if (cb.checked) search.value = '';
+            renderChips();
+            renderDropdown(search.value);
+          });
+          dropdown.appendChild(opt);
+        });
+      }
+      dropdown.classList.add('open');
+    }
+
+    search.addEventListener('input', function() { renderDropdown(this.value); });
+    search.addEventListener('focus', function() { renderDropdown(this.value); });
+    document.addEventListener('click', function(e) {
+      if (!widget.contains(e.target)) { dropdown.classList.remove('open'); }
+    });
+
+    renderChips();
+  });
+})();
+
+// ── Guild emoji picker modal ──
+(function() {
+  var modal   = document.getElementById('emojiPickerModal');
+  if (!modal) return;
+  var grid    = document.getElementById('emojiPickerGrid');
+  var search  = document.getElementById('emojiPickerSearch');
+  var closeBtn = modal.querySelector('.emoji-modal-close');
+  var tabBtns = Array.from(modal.querySelectorAll('.emoji-tab'));
+  var dataEl  = document.getElementById('guild-emojis-data');
+  var emojis  = [];
+  try { emojis = dataEl ? JSON.parse(dataEl.textContent) : []; } catch (e) { emojis = []; }
+
+  var targetId = null;
+  var filter   = 'all';
+
+  function render() {
+    var q = (search.value || '').toLowerCase();
+    grid.innerHTML = '';
+    var matches = emojis.filter(function(e) {
+      if (filter === 'static' && e.animated) return false;
+      if (filter === 'animated' && !e.animated) return false;
+      return !q || e.name.toLowerCase().indexOf(q) !== -1;
+    });
+    if (!matches.length) {
+      grid.innerHTML = '<div class="emoji-empty">No emojis. Server may not have custom emojis, or role sync hasn\'t run.</div>';
+      return;
+    }
+    matches.forEach(function(e) {
+      var tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'emoji-tile';
+      tile.title = ':' + e.name + ':';
+      var img = document.createElement('img');
+      img.src = e.url;
+      img.alt = e.name;
+      img.loading = 'lazy';
+      tile.appendChild(img);
+      tile.addEventListener('click', function() {
+        if (targetId) {
+          var input = document.getElementById(targetId);
+          if (input) { input.value = e.token; input.dispatchEvent(new Event('change')); }
+        }
+        close();
+      });
+      grid.appendChild(tile);
+    });
+  }
+
+  function open(tid) {
+    targetId = tid;
+    search.value = '';
+    filter = 'all';
+    tabBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.emojiTab === 'all'); });
+    modal.classList.add('open');
+    render();
+    setTimeout(function() { search.focus(); }, 50);
+  }
+
+  function close() { modal.classList.remove('open'); targetId = null; }
+
+  document.querySelectorAll('[data-emoji-target]').forEach(function(btn) {
+    btn.addEventListener('click', function() { open(btn.dataset.emojiTarget); });
+  });
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+  search.addEventListener('input', render);
+  tabBtns.forEach(function(b) {
+    b.addEventListener('click', function() {
+      filter = b.dataset.emojiTab;
+      tabBtns.forEach(function(x) { x.classList.toggle('active', x === b); });
+      render();
+    });
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) close();
+  });
+})();
+</script>
+{% endblock %}

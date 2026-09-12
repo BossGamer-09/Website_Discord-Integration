@@ -1,0 +1,94 @@
+{% extends "analytics/base.html" %}
+{% block title %}Event Health{% endblock %}
+{% block nav_events %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>📅 Event Health</h1>
+  <p>Show rates, attendance, and event cadence for completed events.</p>
+  <span class="period-badge">📅 {{ period_label }}</span>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Events Completed</div>
+    <div class="value accent">{{ total_events }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Avg Show Rate</div>
+    <div class="value {% if avg_show_rate >= 70 %}green{% elif avg_show_rate >= 40 %}amber{% else %}red{% endif %}">{{ avg_show_rate }}%</div>
+  </div>
+</div>
+
+<!-- Weekly trend -->
+{% if weekly_trend %}
+<div class="section-card">
+  <div class="section-header"><h2>Weekly Event Cadence (Last 8 Weeks)</h2></div>
+  <div style="padding:16px 20px;">
+    {% for row in weekly_trend %}
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <span style="font-size:0.8rem;color:var(--ink-muted);">Week of {{ row.week|date:"M d" }}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:0.8rem;">{{ row.count }} event{{ row.count|pluralize }}</span>
+      </div>
+      <div class="bar-track" style="height:8px;">
+        <div class="bar-fill" style="width:{% widthratio row.count weekly_trend.0.count 100 %}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Per-event breakdown -->
+<div class="section-card">
+  <div class="section-header">
+    <h2>Completed Events</h2>
+    <span class="count-badge">{{ total_events }}</span>
+  </div>
+  {% if event_rows %}
+  <table class="data-table">
+    <thead><tr>
+      <th>Event</th>
+      <th>Date</th>
+      <th>RSVPd</th>
+      <th>Present</th>
+      <th>Late</th>
+      <th>No-Show</th>
+      <th>Show Rate</th>
+      <th>Duration</th>
+    </tr></thead>
+    <tbody>
+    {% for row in event_rows %}
+    <tr>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ row.plan.title }}">
+        {{ row.plan.title|truncatechars:40 }}
+      </td>
+      <td style="white-space:nowrap;font-size:0.82rem;color:var(--ink-muted);">
+        {{ row.plan.planned_start_at|date:"Y-m-d" }}
+      </td>
+      <td>{{ row.going }}</td>
+      <td><span class="pill pill-green">{{ row.present }}</span></td>
+      <td><span class="pill pill-amber">{{ row.late }}</span></td>
+      <td><span class="pill pill-red">{{ row.absent }}</span></td>
+      <td>
+        {% if row.show_rate is not None %}
+        <div class="bar-wrap">
+          <div class="bar-track">
+            <div class="bar-fill {% if row.show_rate >= 70 %}green{% elif row.show_rate >= 40 %}amber{% else %}red{% endif %}"
+                 style="width:{{ row.show_rate }}%"></div>
+          </div>
+          <span class="bar-val">{{ row.show_rate }}%</span>
+        </div>
+        {% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+      <td style="white-space:nowrap;font-size:0.82rem;">
+        {% if row.duration_min %}{{ row.duration_min }}m{% else %}<span style="color:var(--ink-subtle)">—</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No completed events in this period.</div>{% endif %}
+</div>
+{% endblock %}
